@@ -30,7 +30,7 @@ gerar o `project-manifest.md`. Nenhum código será escrito.
 ### 2. Desenvolvimento
 
 Carregue obrigatoriamente:
-- @.claude/agents/suitescript-default/suitescript-default.md
+- @.claude/agents/suitescript-dev/suitescript-dev.md
 - @NetsuiteTools/netsuite-tools-api.md
 
 Carregue condicionalmente, apenas quando necessário:

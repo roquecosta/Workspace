@@ -1,0 +1,19 @@
+<scheduledscript scriptid="customscript_tst_relatorio_amostras_sc">
+  <description>Busca todas as amostras com status "enviada" há mais de 30 dias, agrupa por cliente, gera um CSV consolidado e envia por email ao representante de vendas de cada cliente envolvido.</description>
+  <isinactive>F</isinactive>
+  <n>Tst Relatorio Amostras Sc</n>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <notifyuser>F</notifyuser>
+  <scriptfile>[/SuiteScripts/Teste/src/FileCabinet/SuiteScripts/ProjectDome/ControleAmostras/EntryPoints/TST_RelatorioAmostras.SS.js]</scriptfile>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_tst_relatorio_amostras_sc">
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <runasrole>ADMINISTRATOR</runasrole>
+      <status>NOTSCHEDULED</status>
+      <title>Tst Relatorio Amostras Sc</title>
+    </scriptdeployment>
+  </scriptdeployments>
+</scheduledscript>

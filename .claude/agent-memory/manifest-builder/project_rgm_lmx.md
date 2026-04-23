@@ -13,9 +13,16 @@ Projeto de integracao entre NetSuite e WMS da LMX Logistica para o cliente RGM. 
 - `customrecord_pd_lmx_integrat_credentials` e a unica fonte de URLs e credenciais
 - `customrecord_pd_lmx_lauched_orders` armazena o estado de cada pedido enviado ao WMS
 
+**Requisito 2 (especificado em 2026-04-22):** Reenvio automatico de pedidos com falha de confirmacao. Novos objetos:
+- `customscript_pd_lmx_retry_orders_sc` (scheduled) — processa reenvios periodicamente
+- `customrecord_pd_lmx_retry_config` — parametros configuráveis (max tentativas, prazo em dias, intervalo)
+- 3 novos campos em `customrecord_pd_lmx_lauched_orders`: `custrecord_pd_lmx_wms_intr_retry_count`, `custrecord_pd_lmx_wms_intr_retry_log`, `custrecord_pd_lmx_wms_intr_retry_status`
+- `saveLMXOrderReturn.js` precisa ser modificado para inicializar `custrecord_pd_lmx_wms_intr_retry_status` = PENDENTE quando envio original nao for HTTP 200
+
 **Pendencias tecnicas conhecidas:**
 - Campo `dataSeparacao` em `orderPayload.js` esta hard-coded como "2026-12-09"
 - Scripts legados `lmx-integration_userevent.js` e `lmx-integration-xml-invoice.userevent.js` podem ser removidos
+- Validar idempotencia do WMS LMX para pedidos reenviados (risco de duplicata) antes de ativar Requisito 2 em producao
 
 **Dependencia critica:** Bundle de localizacao brasileira (BRL) da Oracle deve estar instalado — varios campos custbody_brl_* e custentity_brl_* sao deste bundle.
 

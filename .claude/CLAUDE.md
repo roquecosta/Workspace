@@ -22,7 +22,7 @@ Aguarde a resposta e então carregue apenas os recursos correspondentes abaixo.
 ### 1. Refinamento / Especificação
 
 Carregue:
-- @.claude/agents/spec-builder/spec-builder.md
+- @.claude/agents/manifest-builder/manifest-builder.md
 
 Não carregue os agentes de desenvolvimento. O objetivo desta sessão é refinar requisitos e
 gerar o `project-manifest.md`. Nenhum código será escrito.

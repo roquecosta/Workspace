@@ -1,0 +1,27 @@
+<usereventscript scriptid="customscript_tst_amostra_ue">
+  <description>Disparado após salvar uma amostra. Se o status mudou para "devolvida", envia email ao representante do cliente (ignora se não houver representante). Sempre recalcula e atualiza o campo custentity_tst_amostras_abertas no cliente.</description>
+  <isinactive>F</isinactive>
+  <n>Tst Amostra Ue</n>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <notifyuser>F</notifyuser>
+  <scriptfile>[/SuiteScripts/Teste/src/FileCabinet/SuiteScripts/ProjectDome/ControleAmostras/EntryPoints/TST_AmostraStatus.UE.js]</scriptfile>
+  <aftersubmit>afterSubmit</aftersubmit>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_tst_amostra_ue">
+      <allemployees>F</allemployees>
+      <alllocalizationcontexts>T</alllocalizationcontexts>
+      <allpartners>F</allpartners>
+      <allroles>F</allroles>
+      <audslctrole></audslctrole>
+      <eventtype></eventtype>
+      <executioncontext>ACTION|ADVANCEDREVREC|BANKCONNECTIVITY|BANKSTATEMENTPARSER|BUNDLEINSTALLATION|CLIENT|CONSOLRATEADJUSTOR|CSVIMPORT|CUSTOMGLLINES|CUSTOMMASSUPDATE|CUSTOMTOOL|DATASETBUILDER|DEBUGGER|EMAILCAPTURE|FICONNECTIVITY|FIPARSER|MAPREDUCE|OCRPLUGIN|OTHER|PAYMENTGATEWAY|PAYMENTPOSTBACK|PLATFORMEXTENSION|PORTLET|PROMOTIONS|RECORDACTION|RESTLET|RESTWEBSERVICES|SCHEDULED|SDFINSTALLATION|SHIPPINGPARTNERS|SUITELET|TAXCALCULATION|USEREVENT|USERINTERFACE|WEBSERVICES|WORKBOOKBUILDER|WORKFLOW</executioncontext>
+      <isdeployed>T</isdeployed>
+      <loglevel>DEBUG</loglevel>
+      <recordtype>CUSTOMRECORD_TST_AMOSTRA</recordtype>
+      <runasrole></runasrole>
+      <status>TESTING</status>
+    </scriptdeployment>
+  </scriptdeployments>
+</usereventscript>

@@ -615,8 +615,164 @@ O chamado Oracle **n. 6893292** (aberto em 17/04/2026) impede a geracao dos XMLs
 
 ---
 
+## Requisito 2 — Reenvio Automatico de Pedidos com Falha de Confirmacao
+
+> **Problema de negocio:** pedidos enviados ao WMS que nao receberam HTTP 200 precisam ser reenviados automaticamente ate um limite configuravel de tentativas ou ate expirar um prazo (em dias) contado a partir da data do envio original. O processo deve ser totalmente automatico, configuravel sem deploy e rastreavel por registro.
+
+---
+
+### Scripts (Requisito 2)
+
+#### customscript_pd_lmx_retry_orders_sc
+
+| Campo        | Valor                                                                                                             |
+|--------------|-------------------------------------------------------------------------------------------------------------------|
+| status       | novo                                                                                                              |
+| type         | scheduled                                                                                                         |
+| file         | src/FileCabinet/SuiteScripts/ProjectDome/LMXIntegration/entry_points/lmx_integration_retry_orders.scheduled.js  |
+| deploymentId | customdeploy_pd_lmx_retry_orders_sc                                                                               |
+| execute      | execute                                                                                                           |
+| description  | Script scheduled que roda periodicamente e reprocessa pedidos enviados ao WMS que nao obtiveram confirmacao (HTTP 200). Consulta `customrecord_pd_lmx_lauched_orders` filtrando registros com `custrecord_pd_lmx_wms_intr_shipping_date` preenchido, status diferente de RETIRADO/CANCELADO e que ainda nao atingiram o limite de tentativas nem expiraram o prazo. Para cada registro elegivel: obtem token, reenvia o pedido via `registerOrderLMX.send()`, registra o resultado no campo de log de tentativas e atualiza a contagem. Le parametros de configuracao (max tentativas, prazo em dias, intervalo) do record `customrecord_pd_lmx_retry_config`. O intervalo de agendamento do deployment deve ser igual ao valor configurado no campo `custrecord_pd_lmx_retry_interval_min`. |
+
+> Decisao assumida (tema 4 nao respondido): erros em um registro individual sao logados no proprio registro e nao interrompem o processamento dos demais. O script continua para o proximo.
+
+> Decisao assumida (tema 5 nao respondido): o deployment sera configurado inicialmente no ambiente sandbox.
+
+> Decisao assumida (tema 6 nao respondido): nao ha rollback — o reenvio e idempotente do ponto de vista do NetSuite; o WMS deve tratar duplicatas por `pedidoCliente`.
+
+---
+
+### Records (Requisito 2)
+
+#### customrecord_pd_lmx_retry_config
+
+| Campo       | Valor                                                                                                             |
+|-------------|-------------------------------------------------------------------------------------------------------------------|
+| status      | novo                                                                                                              |
+| label       | LMX Configuracao de Reenvio                                                                                       |
+| description | Registro de configuracao do processo de reenvio automatico. Espera-se exatamente 1 registro ativo. Permite ajustar comportamento sem necessidade de deploy. |
+
+##### custrecord_pd_lmx_retry_max_attempts
+
+| Campo       | Valor                                                        |
+|-------------|--------------------------------------------------------------|
+| label       | Maximo de Tentativas                                         |
+| type        | integer                                                      |
+| description | Numero maximo de tentativas de reenvio por pedido. Quando a contagem em `custrecord_pd_lmx_wms_intr_retry_count` atingir este valor, o registro e marcado como expirado e nao sera mais processado. |
+| isMandatory | true                                                         |
+
+##### custrecord_pd_lmx_retry_deadline_days
+
+| Campo       | Valor                                                                          |
+|-------------|--------------------------------------------------------------------------------|
+| label       | Prazo Maximo (dias)                                                            |
+| type        | integer                                                                        |
+| description | Numero de dias a partir de `custrecord_pd_lmx_wms_intr_shipping_date` dentro dos quais o reenvio e permitido. Pedidos com data de envio anterior a (hoje - prazo) nao serao mais processados. |
+| isMandatory | true                                                                           |
+
+##### custrecord_pd_lmx_retry_interval_min
+
+| Campo       | Valor                                                                                          |
+|-------------|------------------------------------------------------------------------------------------------|
+| label       | Intervalo de Execucao (minutos)                                                                |
+| type        | integer                                                                                        |
+| description | Intervalo em minutos entre execucoes do scheduled script. Este valor e apenas informativo dentro do record — o intervalo real deve ser configurado manualmente no deployment do script para ser consistente com este campo. |
+| isMandatory | true                                                                                           |
+
+---
+
+### External Fields (Requisito 2)
+
+> Novos campos adicionados ao `customrecord_pd_lmx_lauched_orders` existente para suportar o rastreamento do reenvio.
+
+#### custrecord_pd_lmx_wms_intr_retry_count
+
+| Campo       | Valor                                                                                          |
+|-------------|------------------------------------------------------------------------------------------------|
+| status      | novo                                                                                           |
+| label       | Tentativas de Reenvio                                                                          |
+| type        | integer                                                                                        |
+| appliesTo   | customrecord_pd_lmx_lauched_orders                                                             |
+| description | Contador de quantas vezes o reenvio automatico foi executado para este pedido. Incrementado a cada tentativa pelo `customscript_pd_lmx_retry_orders_sc`. Inicia em 0. |
+| isMandatory | false                                                                                          |
+
+#### custrecord_pd_lmx_wms_intr_retry_log
+
+| Campo       | Valor                                                                                                         |
+|-------------|---------------------------------------------------------------------------------------------------------------|
+| status      | novo                                                                                                          |
+| label       | Log de Tentativas de Reenvio                                                                                  |
+| type        | textarea                                                                                                      |
+| appliesTo   | customrecord_pd_lmx_lauched_orders                                                                            |
+| description | Historico de tentativas de reenvio. Cada linha representa uma tentativa no formato: "DD/MM/YYYY HH:MM:SS - HTTP {statusCode} - {resumo_do_body}". Novas entradas sao concatenadas ao final. Decisao assumida (3.2 nao respondido): o body e truncado a 200 caracteres para nao exceder o limite do campo. |
+| isMandatory | false                                                                                                         |
+
+#### custrecord_pd_lmx_wms_intr_retry_status
+
+| Campo       | Valor                                                                                                         |
+|-------------|---------------------------------------------------------------------------------------------------------------|
+| status      | novo                                                                                                          |
+| label       | Status do Reenvio                                                                                             |
+| type        | text                                                                                                          |
+| appliesTo   | customrecord_pd_lmx_lauched_orders                                                                            |
+| description | Status atual do processo de reenvio automatico para este pedido. Valores possiveis: `PENDENTE` (aguardando proxima tentativa), `CONFIRMADO` (HTTP 200 obtido em reenvio), `EXPIRADO_TENTATIVAS` (atingiu maximo de tentativas), `EXPIRADO_PRAZO` (passou do prazo em dias). Registros com status CONFIRMADO, EXPIRADO_TENTATIVAS ou EXPIRADO_PRAZO nao sao mais processados pelo script. |
+| isMandatory | false                                                                                                         |
+
+---
+
+### Dependencias (Requisito 2)
+
+#### Fluxo 5 — Reenvio Automatico de Pedidos
+
+1. `customscript_pd_lmx_retry_orders_sc` (execute) le configuracoes via SuiteQL em `customrecord_pd_lmx_retry_config`: `custrecord_pd_lmx_retry_max_attempts`, `custrecord_pd_lmx_retry_deadline_days`
+2. Consulta `customrecord_pd_lmx_lauched_orders` via SuiteQL filtrando:
+   - `custrecord_pd_lmx_wms_intr_shipping_date` IS NOT NULL (pedido foi enviado)
+   - `custrecord_pd_lmx_wms_intr_status` NOT IN ('RETIRADO', 'CANCELADO')
+   - `custrecord_pd_lmx_wms_intr_retry_status` NOT IN ('CONFIRMADO', 'EXPIRADO_TENTATIVAS', 'EXPIRADO_PRAZO') — ou campo nulo
+   - `custrecord_pd_lmx_wms_intr_retry_count` < `custrecord_pd_lmx_retry_max_attempts`
+   - `custrecord_pd_lmx_wms_intr_shipping_date` >= (hoje - `custrecord_pd_lmx_retry_deadline_days`)
+3. Para cada registro elegivel:
+   a. Obtem Bearer Token chamando `accessTokenData.getAccessToken()` (reutiliza token entre iteracoes, mesmo padrao do Map/Reduce existente)
+   b. Monta payload do pedido via `orderPayload.buildPayload()` (necessita carregar SO e Customer associados via `custrecord_pd_lmx_wms_intr_sales_order`)
+   c. Chama `registerOrderLMX.send(payload, token)` — mesma logica do Fluxo 1, passo 7
+   d. Incrementa `custrecord_pd_lmx_wms_intr_retry_count`
+   e. Concatena entrada em `custrecord_pd_lmx_wms_intr_retry_log` com timestamp + statusCode + body (truncado a 200 chars)
+   f. Atualiza `custrecord_pd_lmx_wms_intr_retry_status`:
+      - Se HTTP 200: `CONFIRMADO`
+      - Se nova contagem >= max tentativas: `EXPIRADO_TENTATIVAS`
+      - Se data do envio expirou o prazo: `EXPIRADO_PRAZO`
+      - Caso contrario: `PENDENTE`
+4. Erros individuais (excecoes de rede, timeout, 401): logados em `custrecord_pd_lmx_wms_intr_retry_log` com prefixo `ERRO - `. Nao interrompem o processamento dos demais registros.
+
+---
+
+### Notas de implementacao (Requisito 2)
+
+#### Ambiguidade de escopo: o que e "sem confirmacao"
+
+O criterio acordado de "sem confirmacao" e: `custrecord_pd_lmx_wms_intr_shipping_date` preenchido (indica que o envio original foi executado) combinado com `custrecord_pd_lmx_wms_intr_retry_status` nao sendo CONFIRMADO. O campo `custrecord_pd_lmx_wms_intr_retry_status` deve ser populado como `PENDENTE` pelo `customscript_pd_lmx_integ_save_return_st` no momento da criacao do registro, caso o envio original retorne status diferente de 200. Se o envio original ja retornou 200, o script de reenvio nunca deve tocar nesse registro — garantia feita via filtro SuiteQL.
+
+#### Dependencia de dados do pedido original
+
+O reenvio precisa reconstruir o payload original (SO + Customer + itens). Isso exige que `custrecord_pd_lmx_wms_intr_sales_order` esteja preenchido no registro de pedido lancado. Se a SO tiver sido deletada ou fechada entre o envio original e o reenvio, o script deve logar o erro e marcar o registro como `EXPIRADO_TENTATIVAS` (decisao padrao — sem dado, sem reenvio possivel).
+
+#### Intervalo de agendamento vs. campo de configuracao
+
+O campo `custrecord_pd_lmx_retry_interval_min` documenta o intervalo desejado mas nao e lido programaticamente pelo script para controlar o agendamento (o NetSuite nao permite que um scheduled script altere sua propria frequencia em runtime). O valor serve de referencia para que o administrador configure o deployment manualmente. Qualquer divergencia entre o campo e o deployment real deve ser tratada como erro de configuracao operacional.
+
+#### Idempotencia e duplicatas no WMS
+
+O reenvio envia o mesmo payload que o envio original. O WMS da LMX deve ser capaz de identificar duplicatas pelo campo `pedidoCliente`. Caso o WMS nao seja idempotente, o risco de criacao de pedido duplicado no WMS existe e deve ser validado com a equipe da LMX antes de ativar o script em producao.
+
+#### Inicializacao do campo custrecord_pd_lmx_wms_intr_retry_status
+
+O `customscript_pd_lmx_integ_save_return_st` (Fluxo 1, passo 8) precisara ser modificado para gravar o valor inicial de `custrecord_pd_lmx_wms_intr_retry_status`: `PENDENTE` se o statusCode do envio original nao for 200, ou nenhum valor (deixar nulo) se for 200. Isso implica uma alteracao no use case `saveLMXOrderReturn.js` — dependencia entre os dois requisitos.
+
+---
+
 ## Changelog
 
 | Data       | Autor                       | Mudanca                        |
 |------------|-----------------------------|--------------------------------|
 | 2026-04-22 | Spec Builder (ProjectDome)  | Geracao do manifest a partir do codigo existente |
+| 2026-04-22 | Spec Builder (ProjectDome)  | Adicao do Requisito 2: reenvio automatico de pedidos com falha de confirmacao |

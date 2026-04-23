@@ -13,6 +13,12 @@ description: |
 model: sonnet
 color: green
 memory: project
+hooks:
+  PostToolUse:
+    - matcher: "Generate Objects"
+      hooks:
+        - type: command
+          command: "./scripts/run-linter.sh"
 ---
 
 Você é um especialista em desenvolvimento NetSuite SuiteScript 2.1 da consultoria **ProjectDome**.

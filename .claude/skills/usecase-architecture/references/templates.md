@@ -1,42 +1,6 @@
-# Arquitetura: UseCase Architecture — Netsuite
+# Templates de código — NetSuite UseCase Architecture
 
-Use este recurso ao criar ou modificar scripts que seguem o padrão arquitetural **EntryPoint / UseCase / Model** da ProjectDome.
-
----
-
-## Quando usar este padrão
-
-Use sempre que o script envolver:
-- Mais de uma operação de leitura/escrita em records
-- Regras de negócio que precisam ser reutilizadas em outros scripts
-- Lógica que justifique separação de responsabilidades
-
-Scripts simples de uma única operação podem usar apenas o EntryPoint com o NetsuiteTools diretamente.
-
----
-
-## Estrutura de pastas
-
-```
-<projeto>/
-├── EntryPoints/
-│   └── <Descricao>.<tipo>.js       ← apenas orquestração, sem regra de negócio
-├── UseCases/
-│   └── <NomeAção>.js               ← regras de negócio, exporta execute()
-└── Models/
-    └── <NomeRecord>.model.js       ← acesso a dados, TYPE, FIELDS, funções CRUD
-```
-
----
-
-## Responsabilidades de cada camada
-
-### EntryPoint
-- Ponto de entrada do SuiteScript (UE, MR, CS, SL)
-- **Não contém regra de negócio**
-- Apenas lê o contexto, extrai o que precisa e delega para UseCases
-- Importa Models apenas para acessar `FIELDS` (ex: `getValue`)
-- Nunca acessa records diretamente — isso é responsabilidade do Model
+## Template: EntryPoint (UserEventScript)
 
 ```javascript
 /**
@@ -71,12 +35,7 @@ define([
 
 ---
 
-### UseCase
-- Contém as regras de negócio
-- Exporta sempre uma função `execute()` como ponto de entrada
-- Pode importar múltiplos Models
-- Nunca usa `record.load` / `record.create` diretamente — delega ao Model
-- Pode chamar outros UseCases se necessário
+## Template: UseCase
 
 ```javascript
 /**
@@ -114,12 +73,7 @@ define([
 
 ---
 
-### Model
-- Responsável por **tudo** que toca o record: leitura, escrita, busca
-- Declara `TYPE` e `FIELDS` como constantes exportadas
-- Exporta funções CRUD semânticas (ex: `create`, `load`, `getByCaixaPai`)
-- Nunca contém regra de negócio — apenas acesso a dados
-- Usa sempre `record_util` e `search_util` da NetsuiteTools
+## Template: Model
 
 ```javascript
 /**
@@ -144,18 +98,18 @@ define([
         campoValor:   { name: 'custrecord_campo_valor' },
     };
 
-    const SUBLIST_ID = 'sublistId'
+    const SUBLIST_ID = 'sublistId';
     const SUBLIST_FIELDS = {
         nomeAtributo: { name: 'columnfieldid' }
-    }
+    };
 
     function readData(rec) {
         return record_util
             .handler(rec)
-            .data({ 
+            .data({
                 fields: FIELDS,
                 sublists: {
-                    sublistName : {
+                    sublistName: {
                         id: SUBLIST_ID,
                         fields: SUBLIST_FIELDS
                     }
@@ -218,27 +172,4 @@ define([
         updateBalances,
     };
 });
-```
-
----
-
-## Regras da arquitetura
-
-- **EntryPoint nunca acessa record diretamente** — sempre via UseCase ou Model
-- **UseCase nunca usa `record.load` / `record.create`** — sempre via Model
-- **Model nunca contém `if` de regra de negócio** — apenas operações de dados
-- Funções do Model devem ter nomes semânticos que reflitam o domínio (`getByCaixaPai`, `markClosingStep1`)
-- Cada UseCase deve ter uma única responsabilidade (ex: `UpdateCaixaBalance`, `ValidateCaixaStatus`)
-- Logs de erro sempre no formato: `'NomeArquivo | nomeFuncao - descrição'`
-
----
-
-## Padrão de log
-
-```javascript
-// Erro com detalhe
-log.error({ title: 'NomeArquivo | nomeFuncao - descrição do erro', details: JSON.stringify(valor) });
-
-// Sucesso em operação importante
-log.audit({ title: 'NomeArquivo | nomeFuncao - success', details: JSON.stringify({ id, campo }) });
 ```

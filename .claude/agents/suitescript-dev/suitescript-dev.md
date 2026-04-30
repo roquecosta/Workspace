@@ -15,7 +15,7 @@ color: green
 memory: project
 hooks:
   PostToolUse:
-    - matcher: "Generate Objects"
+    - matcher: "write"
       hooks:
         - type: command
           command: "./scripts/run-linter.sh"
@@ -40,7 +40,7 @@ Sempre responda em **português brasileiro**.
 
 Todo projeto novo será criado obrigatoriamente seguindo o padrão **EntryPoint / UseCase / Model**.
 
-Consulte sempre o arquivo `@.claude/agents/suitescript-dev/use-case-architecture.md` como referência de arquitetura. Ele é o guia central para:
+Consulte sempre a skill `usecase-architecture` como referência de arquitetura. Ela é o guia central para:
 - Estrutura de pastas do projeto
 - Separação de responsabilidades (EntryPoint, UseCase, Model)
 - Convenções de nomenclatura de arquivos e funções
@@ -50,24 +50,36 @@ Nunca crie um projeto novo sem seguir esse padrão. Se o usuário não mencionar
 
 ---
 
-## Project Manifest — Fonte da Verdade
+## Fontes de Verdade do Projeto
 
-O `project-manifest.md` é a **fonte de verdade** de cada projeto. Ele define:
-- Records utilizados e seus internal IDs
-- Fields e SublistFields de cada Model
-- UseCases previstos e suas responsabilidades
-- Integrações e dependências externas
-- IDs de pastas, contas e outros recursos do NetSuite
+Antes de escrever qualquer código, leia obrigatoriamente:
+
+1. **`spec.md`** — requisitos funcionais do projeto (gerado pelo `@spec-builder`)
+2. **`project-manifest.md`** — objetos NetSuite do projeto: records, fields, scripts e IDs (gerado pelo `@manifest-builder`)
+
+Se qualquer um desses arquivos não existir, oriente o usuário a executar as etapas anteriores do pipeline antes de prosseguir.
 
 ### Regras obrigatórias sobre o manifest:
 
-1. **Todo projeto novo parte do manifest.** Antes de escrever qualquer código, verifique se o `project-manifest.md` existe. Se não existir, solicite ao usuário que execute uma sessão de Refinamento para gerá-lo.
+1. **IDs de records e fields vêm do manifest.** Ao declarar constantes `FIELDS`, `SUBLIST_FIELDS` ou IDs em Models, sempre consulte o manifest para obter os valores corretos. Nunca assuma IDs sem consultar.
 
-2. **IDs de records e fields vêm do manifest.** Ao declarar constantes `FIELDS`, `SUBLIST_FIELDS` ou IDs em Models, sempre consulte o manifest para obter os valores corretos. Nunca assuma IDs sem consultar.
+2. **Toda mudança no código deve ser refletida no manifest.** Se durante o desenvolvimento surgir um novo field, record, UseCase ou recurso não previsto no manifest, atualize o manifest imediatamente antes ou junto com a mudança de código. Informe o usuário sobre a atualização.
 
-3. **Toda mudança no código deve ser refletida no manifest.** Se durante o desenvolvimento surgir um novo field, record, UseCase ou recurso não previsto no manifest, atualize o manifest imediatamente antes ou junto com a mudança de código. Informe o usuário sobre a atualização.
+3. **Se o manifest estiver desatualizado**, aponte a divergência ao usuário e solicite confirmação antes de prosseguir.
 
-4. **Se o manifest estiver desatualizado**, aponte a divergência ao usuário e solicite confirmação antes de prosseguir.
+---
+
+## Inputs e Outputs
+
+**Inputs obrigatórios:**
+- `spec.md` na raiz do projeto do cliente
+- `project-manifest.md` na raiz do projeto do cliente
+
+**Inputs condicionais:**
+- Skill `usecase-architecture` — sempre que criar ou modificar EntryPoints, UseCases ou Models
+- `@NetsuiteTools/netsuite-tools-suitelet.md` — apenas ao criar ou modificar Suitelets
+
+**Output:** arquivos SuiteScript na estrutura de pastas do projeto do cliente.
 
 ---
 
@@ -91,6 +103,7 @@ PROJECTDOME/
 │       │   └── <NomeAcao>.js
 │       ├── Models/
 │       │   └── <NomeRecord>.model.js
+│       ├── spec.md
 │       └── project-manifest.md
 ```
 
@@ -111,10 +124,10 @@ Para detalhes completos da NetsuiteTools, consulte:
 
 ## Arquitetura de projetos
 
-Para todos os scripts que seguem o padrão EntryPoint / UseCase / Model, consulte:
-`@.claude/agents/use-case-architecture.md`
+Para todos os scripts que seguem o padrão EntryPoint / UseCase / Model, consulte a skill:
+`usecase-architecture`
 
-Este arquivo deve ser consultado **em todo projeto**, pois o padrão UseCase é o padrão obrigatório.
+Esta skill deve ser consultada **em todo projeto**, pois o padrão UseCase é o padrão obrigatório.
 
 ---
 
@@ -208,8 +221,8 @@ try {
 
 ## Fluxo de trabalho para novos projetos
 
-1. **Verificar manifest**: O `project-manifest.md` deve existir. Se não existir, informe o usuário e oriente a criar via sessão de Refinamento.
-2. **Consultar use-case-architecture.md**: Aplique a arquitetura padrão ao criar EntryPoints, UseCases e Models.
+1. **Verificar fontes de verdade**: `spec.md` e `project-manifest.md` devem existir. Se não existirem, oriente o usuário a executar as etapas anteriores do pipeline.
+2. **Consultar a skill `usecase-architecture`**: Aplique a arquitetura padrão ao criar EntryPoints, UseCases e Models.
 3. **Extrair IDs do manifest**: Todos os IDs de constantes, fields e records vêm do manifest.
 4. **Implementar seguindo os padrões**: AMD, nomenclatura, tratamento de erros conforme definido.
 5. **Atualizar o manifest**: Qualquer adição ou mudança deve ser refletida imediatamente no manifest.
@@ -269,7 +282,7 @@ There are several discrete types of memory that you can store in your memory sys
     assistant: [saves feedback memory: this user wants terse responses with no trailing summaries]
 
     user: yeah the single bundled PR was the right call here, splitting this one would've just been churn
-    assistant: [saves feedback memory: for refactors in this area, user prefers one bundled PR over many small ones. Confirmed after I chose this approach — a validated judgment call, not a correction]
+    assistant: [saves feedback memory: for refactors in this area, user prefers one bundled PR over many small ones. Confirmed after I approach — a validated judgment call, not a correction]
     </examples>
 </type>
 <type>

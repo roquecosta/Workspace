@@ -9,37 +9,51 @@ Sempre responda em **português brasileiro**.
 
 **Antes de carregar qualquer arquivo ou executar qualquer tarefa**, pergunte:
 
-> "Qual o tipo de sessão?
-> 1. Refinamento / Especificação
-> 2. Desenvolvimento"
+> "Qual etapa do projeto?
+> 1. Especificação — gerar o `spec.md`
+> 2. Manifest — gerar o `project-manifest.md` a partir do `spec.md`
+> 3. Implementação — escrever o código SuiteScript"
 
-Aguarde a resposta e então carregue apenas os recursos correspondentes abaixo.
+Aguarde a resposta e então carregue apenas os recursos da etapa correspondente abaixo.
 
 ---
 
-## Recursos por tipo de sessão
+## Pipeline de desenvolvimento
 
-### 1. Refinamento / Especificação
+O fluxo padrão de um projeto ProjectDome é sequencial: **Especificação → Manifest → Implementação**.
+Cada etapa produz um artefato que alimenta a próxima. Nunca pule etapas.
+
+---
+
+## Recursos por etapa
+
+### 1. Especificação
 
 Carregue:
-- @.claude/agents/manifest-builder/manifest-builder.md
+- `@.claude/agents/spec-builder/spec-builder.md`
 
-Não carregue os agentes de desenvolvimento. O objetivo desta sessão é refinar requisitos e
-gerar o `project-manifest.md`. Nenhum código será escrito.
+---
 
-### 2. Desenvolvimento
+### 2. Manifest
+
+Carregue:
+- `@.claude/agents/manifest-builder/manifest-builder.md`
+
+---
+
+### 3. Implementação
 
 Carregue obrigatoriamente:
-- @.claude/agents/suitescript-dev/suitescript-dev.md
-- @NetsuiteTools/netsuite-tools-api.md
+- `@.claude/agents/suitescript-dev/suitescript-dev.md`
+- `@NetsuiteTools/netsuite-tools-api.md`
 
 Carregue condicionalmente, apenas quando necessário:
 
 - **Ao criar ou modificar scripts com EntryPoint / UseCase / Model:**
-  @.claude/agents/use-case-architecture.md
+  Skill: `usecase-architecture`
 
 - **Ao criar ou modificar Suitelets:**
-  @NetsuiteTools/netsuite-tools-suitelet.md
+  `@NetsuiteTools/netsuite-tools-suitelet.md`
 
 ---
 
@@ -47,4 +61,3 @@ Carregue condicionalmente, apenas quando necessário:
 
 - Cada pasta na raiz representa um cliente: AMAM, Azion, Extra, Gafisa, GrupoFF, Gupy, Pinefy, etc.
 - Sempre inicie o Claude Code dentro da pasta do cliente que está trabalhando.
-- A lib interna NetsuiteTools fica em `NetsuiteTools/` na raiz e é compartilhada entre todos os clientes.

@@ -1,8 +1,8 @@
 # Controle de Amostras
 
 > Rastreamento de amostras enviadas a clientes, substituindo planilha Excel. Registra envios,
-> vincula a pedidos de venda (quando existente), notifica devolução por email e emite relatório
-> mensal de pendências.
+> vincula a pedidos de venda (quando existente), notifica responsável por email em mudança de status
+> e envia lembretes diários de devolução ao cliente.
 
 ---
 
@@ -14,7 +14,7 @@
 | Prefixo        | tst                          |
 | Responsável    | Roque Costa                  |
 | Criado em      | 2026-04-20                   |
-| Última revisão | 2026-04-20                   |
+| Última revisão | 2026-04-24                   |
 
 ---
 
@@ -28,11 +28,11 @@
 |--------------|-----------------------------------------------------------------------------------------------------------------------------------|
 | status       | novo                                                                                                                              |
 | type         | userevent                                                                                                                         |
-| file         | Teste/src/FileCabinet/SuiteScripts/ProjectDome/ControleAmostras/EntryPoints/TST_AmostraStatus.UE.js                              |
+| file         | SuiteScripts/ProjectDome/ControleAmostras/EntryPoints/TST_AmostraStatus.UE.js                                                    |
 | recordType   | customrecord_tst_amostra                                                                                                          |
 | deploymentId | customdeploy_tst_amostra_ue                                                                                                       |
 | afterSubmit  | afterSubmit                                                                                                                       |
-| description  | Disparado após salvar uma amostra. Se o status mudou para "devolvida", envia email ao representante do cliente (ignora se não houver representante). Sempre recalcula e atualiza o campo custentity_tst_amostras_abertas no cliente. |
+| description  | Disparado após salvar uma amostra. Se o status mudou para "devolvida" ou "perdida", envia email ao representante do cliente (ignora silenciosamente se representante estiver vazio). Sempre recalcula e atualiza o campo custentity_tst_amostras_abertas no cliente. |
 
 ### [customscript_tst_relatorio_amostras_sc]
 
@@ -40,11 +40,11 @@
 |--------------|-----------------------------------------------------------------------------------------------------------------------------------------|
 | status       | novo                                                                                                                                    |
 | type         | scheduled                                                                                                                               |
-| file         | Teste/src/FileCabinet/SuiteScripts/ProjectDome/ControleAmostras/EntryPoints/TST_RelatorioAmostras.SS.js                                 |
+| file         | SuiteScripts/ProjectDome/ControleAmostras/EntryPoints/TST_RelatorioAmostras.SS.js                                                       |
 | deploymentId | customdeploy_tst_relatorio_amostras_sc                                                                                                  |
 | function     | execute                                                                                                                                 |
-| schedule     | Dia 5 de cada mês                                                                                                                       |
-| description  | Busca todas as amostras com status "enviada" há mais de 30 dias, agrupa por cliente, gera um CSV consolidado e envia por email ao representante de vendas de cada cliente envolvido. |
+| schedule     | Diariamente                                                                                                                             |
+| description  | Busca todas as amostras com status "enviada" há mais de 30 dias, agrupa por cliente e envia email individualmente para o endereço de email de cada cliente (campo nativo `email` no customer) com a lista de amostras pendentes dele. |
 
 ---
 
@@ -63,6 +63,15 @@
 | isAvailableOffline | false                                                                              |
 
 #### Campos
+
+##### Name (built-in)
+
+| Campo       | Valor                                     |
+|-------------|-------------------------------------------|
+| label       | Nome / Identificador                      |
+| type        | text                                      |
+| description | Identificador da amostra (ex: AMS-0001). Preenchimento manual pelo usuário. |
+| isMandatory | true                                      |
 
 ##### [custrecord_tst_amostra_cliente]
 
@@ -151,7 +160,7 @@
 | internalId  | 1847                                                                                           |
 | label       | Representante de Vendas                                                                        |
 | appliesTo   | customer                                                                                       |
-| description | Representante responsável pelo cliente. Usado para envio de email nas notificações de devolução e no relatório mensal. |
+| description | Representante responsável pelo cliente. Destino do email de notificação quando status muda para "devolvida" ou "perdida". |
 
 ---
 
@@ -170,12 +179,12 @@
 
 ## Dependências entre objetos
 
-- `customscript_tst_amostra_ue` lê `custrecord_tst_amostra_status` para detectar transição para "devolvida" (compara `context.oldRecord` vs `context.newRecord`)
+- `customscript_tst_amostra_ue` lê `custrecord_tst_amostra_status` para detectar transição para "devolvida" ou "perdida" (compara `context.oldRecord` vs `context.newRecord`)
 - `customscript_tst_amostra_ue` lê `custrecord_tst_amostra_cliente` para localizar o cliente da amostra
-- `customscript_tst_amostra_ue` lê `custentity_ff_representante` (internalId 1847) no `customer` para obter o destinatário do email
+- `customscript_tst_amostra_ue` lê `custentity_ff_representante` (internalId 1847) no `customer` para obter o destinatário do email de notificação
 - `customscript_tst_amostra_ue` atualiza `custentity_tst_amostras_abertas` no `customer` após cada save
 - `customscript_tst_relatorio_amostras_sc` lê `customrecord_tst_amostra` filtrando por status = "enviada" e `custrecord_tst_amostra_data_envio` <= hoje − 30 dias
-- `customscript_tst_relatorio_amostras_sc` lê `custentity_ff_representante` no `customer` para enviar o CSV por email
+- `customscript_tst_relatorio_amostras_sc` lê o campo nativo `email` do `customer` para enviar o relatório de pendências ao cliente externo
 - `custrecord_tst_amostra_cliente` faz lookup em `customer`
 - `custrecord_tst_amostra_item` faz lookup em `item`
 - `custrecord_tst_amostra_pedido` faz lookup em `salesorder`
@@ -186,19 +195,19 @@
 ## Notas de implementação
 
 - **Status padrão:** toda amostra nova deve ter status inicial = "enviada". Garantir via `defaultValue` no campo.
-- **Email de devolução:** disparado no `afterSubmit` do UE somente quando o status mudou de outro valor para "devolvida". Comparar `context.oldRecord` vs `context.newRecord`. Se o cliente não tiver representante (`custentity_ff_representante` vazio), ignorar silenciosamente sem lançar erro.
-- **Atualização do contador `custentity_tst_amostras_abertas`:** executar em todo `afterSubmit` do UE (create e edit) via `search_util`, contando amostras do cliente com status = "enviada". Sempre recalcular do zero — não incrementar/decrementar, para evitar inconsistências.
-- **Status "perdida":** nenhuma ação automática. Apenas registra.
-- **Relatório mensal — agrupamento por representante:** o scheduled script deve agrupar os resultados por representante de vendas (`custentity_ff_representante`) e enviar um único email por representante, com CSV contendo todos os clientes e amostras sob sua responsabilidade. Clientes sem representante entram no CSV mas não são enviados.
-- **Destinatário do relatório mensal:** foi respondido como "pro customer da transação". Interpretado como o representante de vendas (`custentity_ff_representante`) de cada cliente com amostras em aberto, pois é o contato interno responsável por cobrar a devolução. **Confirmar com o cliente** se a intenção era enviar ao cliente externo.
-- **Restrição de status "somente sistema":** usuários não devem alterar o status manualmente. Implementação recomendada: `clientscript` que torna `custrecord_tst_amostra_status` somente leitura na tela de edição. **Ponto de atenção:** se o sistema é o único que altera o status, é necessário definir como o usuário informa que uma amostra foi devolvida ou perdida (ex: botão de ação em workflow, suitelet). Esse mecanismo não foi especificado — alinhar com o cliente antes do desenvolvimento.
+- **Email de notificação (devolvida / perdida):** disparado no `afterSubmit` do UE quando o status muda de outro valor para "devolvida" **ou** "perdida". Comparar `context.oldRecord` vs `context.newRecord`. Se o cliente não tiver representante (`custentity_ff_representante` vazio), ignorar silenciosamente sem lançar erro.
+- **Atualização do contador `custentity_tst_amostras_abertas`:** executar em todo `afterSubmit` do UE (create e edit) via `search`, contando amostras do cliente com status = "enviada". Sempre recalcular do zero — não incrementar/decrementar, para evitar inconsistências.
+- **Relatório diário — destinatário:** o email vai para o endereço de email do **cliente externo** (campo nativo `email` do registro `customer`). Clientes sem email cadastrado são ignorados silenciosamente. O email lista todos os produtos/quantidades/datas de envio em aberto daquele cliente.
+- **Pedido de venda opcional:** `custrecord_tst_amostra_pedido` não é obrigatório — cenário de prospecção sem pedido associado é válido.
+- **Campo Name do custom record:** campo nativo do NetSuite; não é `custrecord_`. Preenchimento manual pelo usuário. Recomenda-se convenção como "AMS-{ano}-{sequencial}", sem automação nesta fase.
 - **Ambiente:** deploy inicia em sandbox antes de produção.
-- **Pasta dos arquivos:** `Teste/src/FileCabinet/SuiteScripts/ProjectDome/ControleAmostras/`
+- **Pasta dos arquivos:** `SuiteScripts/ProjectDome/ControleAmostras/`
 
 ---
 
 ## Changelog
 
-| Data       | Autor       | Mudança             |
-|------------|-------------|---------------------|
-| 2026-04-20 | Roque Costa | Criação do manifest |
+| Data       | Autor            | Mudança                                                                                      |
+|------------|------------------|----------------------------------------------------------------------------------------------|
+| 2026-04-20 | Roque Costa      | Criação do manifest                                                                          |
+| 2026-04-24 | manifest-builder | "perdida" também dispara email; relatório vai ao cliente externo; schedule atualizado para diário; campo Name adicionado ao custom record |

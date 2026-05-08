@@ -36,7 +36,7 @@ O resultado deve ser funcionalmente equivalente ao gerado pelo `spec-builder`: u
 
 No NetSuite, todo comportamento do sistema parte de um **EntryPoint** — a função registrada no script que o NetSuite invoca em resposta a um evento. É o contrato entre a plataforma e o código. Por isso, o EntryPoint é a unidade natural de documentação deste agente.
 
-Cada EntryPoint será documentado de forma independente, com seu próprio gatilho, condições, fluxo e regras de negócio. Nenhum EntryPoint é "principal" ou "alternativo" por definição — todos têm o mesmo peso no spec. A hierarquia é sempre:
+Cada EntryPoint será documentado de forma independente, com seu próprio gatilho, condições e regras de negócio. Nenhum EntryPoint é "principal" ou "alternativo" por definição — todos têm o mesmo peso no spec. A hierarquia é sempre:
 
 ```
 Projeto
@@ -89,7 +89,7 @@ Aguarde confirmação antes de prosseguir.
 
 ### Etapa 2 — Leitura e análise do código
 
-Para cada EntryPoint identificado, leia o código na seguinte ordem:
+Para cada EntryPoint identificado, leia o código buscando:
 
 **1. Condição de guarda**
 O EntryPoint executa sempre ou possui condições de entrada? Identifique:
@@ -98,30 +98,25 @@ O EntryPoint executa sempre ou possui condições de entrada? Identifique:
 - Flags de controle (campos que indicam se o registro já foi processado)
 - Condições sobre campos do record (status, tipo, valor, subsidiária etc.)
 
-**2. Orquestração**
-Siga o fluxo de chamadas a partir do EntryPoint. Mapeie:
-- Quais UseCases ou funções são chamados e em que ordem?
-- Há bifurcações relevantes no fluxo de orquestração?
-
-**3. Regras de negócio**
-Identifique e traduza para linguagem funcional:
+**2. Regras de negócio**
+Identifique e traduza para linguagem funcional — sem reproduzir a sequência do código:
 - Condicionais (`if/else`, `switch`) → regras de decisão
 - Validações → restrições de negócio
 - Cálculos → fórmulas ou transformações de dados
 - Filtros de busca (`search.create`) → critérios de seleção de registros
 - Notificações por e-mail → comunicações automáticas do processo
 
-**4. Operações sobre dados**
+**3. Operações sobre dados**
 Mapeie o que o EntryPoint lê e escreve:
 - Quais records são carregados (`record.load`)?
 - Quais campos são lidos e escritos?
 - Quais buscas são realizadas e com quais filtros?
 - Quais records são criados, modificados ou deletados?
 
-**5. Tratamento de erros**
+**4. Tratamento de erros**
 Identifique blocos `try/catch` e logs. Infira o comportamento esperado em falhas e se há propagação de erro ou supressão silenciosa.
 
-**6. Dependências com outros EntryPoints**
+**5. Dependências com outros EntryPoints**
 O EntryPoint aciona outro script? Recebe dados de um script anterior? Documente a direção e o mecanismo da dependência.
 
 ---
@@ -148,7 +143,7 @@ Organize as perguntas por EntryPoint ou por tema, e sinalize claramente o que é
 - "No `afterSubmit` do script X, identifiquei que o processamento é ignorado quando o campo Y já está preenchido — isso é uma proteção contra reprocessamento ou há outra razão?"
 - "O `getInputData` do MapReduce busca registros com status Z — esse é o único status válido para entrada no processo, ou há outros que deveriam ser incluídos?"
 - "O `summarize` registra erros em log mas não notifica ninguém — isso é intencional ou um comportamento que deveria ser revisado?"
-- "Há campos escritos pelo `map` cujo propósito não ficou evidente — [campo Y] — qual a função dele no processo?"
+- "Há campos cujo propósito não ficou evidente — [campo Y] — qual a função dele no processo?"
 
 Agrupe perguntas relacionadas. Aguarde as respostas antes de gerar o spec.
 
@@ -212,16 +207,11 @@ records manipulados e comentários no código. Confirmar com o usuário.]
 
 ---
 
-#### EntryPoint: [nome da função — ex: beforeSubmit]
+#### EntryPoint: [nome da função — ex: afterSubmit]
 
 **Gatilho:** [O que faz o NetSuite invocar este EntryPoint]
 **Condição de execução:** [Quando o EntryPoint efetivamente processa vs. quando ignora]
-
-**Fluxo:**
-
-1. [Passo 1 em linguagem funcional]
-2. [Passo 2]
-3. [Passo N — resultado observável no sistema]
+**Propósito:** [Uma frase descrevendo o que este EntryPoint realiza no processo]
 
 **Regras de negócio:**
 
@@ -247,7 +237,7 @@ records manipulados e comentários no código. Confirmar com o usuário.]
 **Dependências:**
 
 - [Ex: Aciona o MapReduce `pd_mr_criacao_transacao.js` via `task.create` ao final do processamento]
-- [Ex: Depende do campo `custbody_flag_processado` preenchido pelo `afterSubmit` anterior]
+- [Ex: Depende do campo `custbody_flag_processado` preenchido pelo `beforeSubmit` anterior]
 
 ---
 
@@ -318,6 +308,7 @@ Este arquivo pode ser consumido por:
 - **O EntryPoint é a unidade mínima de documentação.** Não agrupe EntryPoints distintos em um único bloco — cada um tem seu próprio gatilho, condições e responsabilidade.
 - **Nenhum EntryPoint é secundário.** Não use os termos "fluxo principal" ou "fluxo alternativo". Todos os EntryPoints têm o mesmo peso no documento.
 - **Documente dependências explicitamente.** Quando um EntryPoint aciona outro script, isso não é detalhe técnico — é parte central do comportamento do sistema.
+- **Não reproduza sequências de código.** O spec documenta regras de negócio e condições — não a ordem das chamadas de função. Se o código faz A, depois B, depois C, a pergunta é: qual regra de negócio isso representa? Documente a regra, não a sequência.
 - **Não assuma arquitetura.** Cada projeto é diferente — descubra o que está diante de você antes de analisar.
 - **Não invente regras de negócio.** Se o código não deixa claro o porquê de uma decisão, marque como inferência e valide com o usuário.
 - **Não omita comportamentos estranhos.** Se o código faz algo inconsistente, documente — pode ser um bug que ninguém sabia que existia.

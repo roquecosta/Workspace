@@ -10,12 +10,11 @@ Sempre responda em **português brasileiro**.
 **Antes de carregar qualquer arquivo ou executar qualquer tarefa**, pergunte:
 
 > "Qual etapa do projeto?
-> 1. Especificação — gerar o `spec.md` a partir de requisitos
+> 1. Especificação — criar ou evoluir um `spec.md` (nova demanda, mudança de escopo ou correção)
 > 2. Especificação reversa — gerar o `spec.md` a partir de código existente
-> 3. Edição de spec — evoluir ou corrigir um `spec.md` já existente
-> 4. Manifest — gerar o `project-manifest.md` a partir do `spec.md`
-> 5. Tasks — gerar ou atualizar o `task.md` a partir do `project-manifest.md`
-> 6. Implementação — escrever o código SuiteScript"
+> 3. Manifest — gerar o `project-manifest.md` a partir do `spec.md`
+> 4. Tasks — gerar ou atualizar o `task.md` a partir do `project-manifest.md`
+> 5. Implementação — escrever o código SuiteScript"
 
 Aguarde a resposta e então carregue apenas os recursos da etapa correspondente abaixo.
 
@@ -30,21 +29,21 @@ O fluxo padrão de um projeto ProjectDome segue esta estrutura:
 - Projeto existente sem documentação → etapa [2] Especificação reversa
 
 **Ambos produzem o `spec.md`, que segue para:**
-- Novas solicitações ou mudanças de escopo → etapa [3] Edição de spec (retorna ao `spec.md` atualizado)
-- Spec aprovado e estável → etapa [4] Manifest
+- Novas solicitações, mudanças de escopo ou correções → etapa [1] Especificação (modo edição)
+- Spec aprovado e estável → etapa [3] Manifest
 
 **Com o `project-manifest.md` em mãos:**
-- etapa [5] Tasks
+- etapa [4] Tasks
 
 **Com o `task.md` em mãos:**
-- etapa [6] Implementação
+- etapa [5] Implementação
 
 > Nunca pule da especificação direto para a implementação.
 > O `spec.md` sempre precede o `project-manifest.md`.
 > O `project-manifest.md` sempre precede o `task.md`.
 > O `task.md` sempre precede a implementação.
-> A etapa [3] pode ser executada quantas vezes forem necessárias antes de avançar para o Manifest.
-> A etapa [5] deve ser executada novamente sempre que o manifest for atualizado.
+> A etapa [1] pode ser executada quantas vezes forem necessárias antes de avançar para o Manifest.
+> A etapa [4] deve ser executada novamente sempre que o manifest for atualizado.
 
 ---
 
@@ -53,7 +52,13 @@ O fluxo padrão de um projeto ProjectDome segue esta estrutura:
 ### 1. Especificação
 
 Carregue:
-- `@.claude/agents/spec-builder/spec-builder.md`
+- `@.claude/agents/spec-manager/spec-manager.md`
+
+O `spec-manager` opera em dois modos detectados automaticamente pelo contexto:
+- **Modo criação** — quando não há spec existente; levanta requisitos e gera o `spec.md`
+- **Modo edição** — quando há um `spec.md` existente; incorpora novas solicitações, correções ou mudanças de escopo de forma cirúrgica
+
+> Use esta etapa tanto para criar specs do zero quanto para evoluí-los após novas demandas do cliente.
 
 ---
 
@@ -64,24 +69,14 @@ Carregue:
 
 ---
 
-### 3. Edição de spec
-
-Carregue:
-- `@.claude/agents/spec-editor/spec-editor.md`
-
-> Use esta etapa sempre que houver novas solicitações do cliente, mudança de escopo,
-> ou correções em um `spec.md` já existente — independente de como ele foi gerado.
-
----
-
-### 4. Manifest
+### 3. Manifest
 
 Carregue:
 - `@.claude/agents/manifest-builder/manifest-builder.md`
 
 ---
 
-### 5. Tasks
+### 4. Tasks
 
 Carregue:
 - `@.claude/agents/task-builder/task-builder.md`
@@ -94,7 +89,7 @@ Inputs esperados pelo agente:
 
 ---
 
-### 6. Implementação
+### 5. Implementação
 
 Carregue obrigatoriamente:
 - `@.claude/agents/suitescript-dev/suitescript-dev.md`

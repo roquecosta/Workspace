@@ -5,5 +5,19 @@
       "Bash(mkdir -p \"C:/Users/Roque/Documents/ProjectDome/Teste/Case3/src/FileCabinet/SuiteScripts/ProjectDome/LMXIntegration/client\")",
       "Bash(mkdir -p \"C:/Users/Roque/Documents/ProjectDome/Teste/Case3/src/FileCabinet/SuiteScripts/ProjectDome/LMXIntegration/use_cases\")"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/on-spec-saved.sh \"$CLAUDE_TOOL_INPUT_FILE_PATH\""
+          }
+        ]
+      }
+    ]
   }
 }
+

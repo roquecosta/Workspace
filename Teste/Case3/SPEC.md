@@ -42,7 +42,7 @@ Automatizar o ciclo de vida completo dos CIOTs no NetSuite — desde a recepçã
 | Script | Tipo | EntryPoints | Subsistema |
 |--------|------|-------------|------------|
 | `pd_t4l_log_entrada_rl.js` | RESTlet | post | Recepção |
-| `pd-t4l-description-log-entry.ue.js` | UserEvent | beforeSubmit, afterSubmit | Recepção |
+| `pd-t4l-log-entry-handler.ue.js` | UserEvent | beforeSubmit, afterSubmit | Recepção |
 | `pd-t4l-log-entry.mr.js` | MapReduce | getInputData, map, summarize | Fila |
 | `pd-t4l-log-entry-create-ciot.mr.js` | MapReduce | getInputData, map, summarize | Fila — Tipo 1 |
 | `pd-t4l-log-entry-cancel-ciot.mr.js` | MapReduce | getInputData, map, summarize | Fila — Tipo 2 |
@@ -74,7 +74,7 @@ Automatizar o ciclo de vida completo dos CIOTs no NetSuite — desde a recepçã
 
 ### 4.2 Dependências entre EntryPoints
 
-- O `afterSubmit` de `pd-t4l-description-log-entry.ue.js` processa diretamente **tipos 1 e 3** na criação do log. Para outros tipos, o `afterSubmit` não executa processamento.
+- O `afterSubmit` de `pd-t4l-log-entry-handler.ue.js` processa diretamente **tipos 1 e 3** na criação do log. Para outros tipos, o `afterSubmit` não executa processamento.
 - O `summarize` de `pd-t4l-log-entry.mr.js` aciona cada MR especializado (tipos 1, 2, 3, 4, 5, 7) via `task.create`, passando os IDs dos logs como parâmetro.
 - O `map` de `pd-t4l-log-entry-paymt-ciot.mr.js` cria NC e ND para pagamentos do tipo REDE, após atualizar a parcela.
 - O `reduce` de `pd-t4l-create-debit-note.mr.js` aciona o MR `pd-t4l-create-nfse-nd.mr.js` via `task.create` ao final.
@@ -124,7 +124,7 @@ Automatizar o ciclo de vida completo dos CIOTs no NetSuite — desde a recepçã
 
 ---
 
-### Script: `pd-t4l-description-log-entry.ue.js`
+### Script: `pd-t4l-log-entry-handler.ue.js`
 
 **Tipo:** UserEvent
 **Record alvo:** `customrecord_pd_t4l_log_entry`

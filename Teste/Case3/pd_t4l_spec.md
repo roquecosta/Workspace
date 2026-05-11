@@ -271,7 +271,7 @@ O sistema possui múltiplos gatilhos, um para cada fase do processo:
 | Arquivo | Tipo | Responsabilidade |
 |---------|------|-----------------|
 | `Log Entrada/restlet/pd_t4l_log_entrada_rl.js` | RESTlet | Recebe webhooks do Tech4Log e cria log entries |
-| `Log Entrada/userevent/pd-t4l-description-log-entry.ue.js` | UserEvent | Processamento síncrono de emissão (tipo 1) e pagamento (tipo 3) |
+| `Log Entrada/userevent/pd-t4l-log-entry-handler.ue.js` | UserEvent | Processamento síncrono de emissão (tipo 1) e pagamento (tipo 3) |
 | `Log Entrada/mapreduce/pd-t4l-log-entry.mr.js` | MapReduce | Orquestrador: despacha logs não processados para MRs especializados |
 | `Log Entrada/mapreduce/pd-t4l-log-entry-create-ciot.mr.js` | MapReduce | Emissão de CIOT (tipo 1) — caminho assíncrono |
 | `Log Entrada/mapreduce/pd-t4l-log-entry-paymt-ciot.mr.js` | MapReduce | Pagamento de parcela (tipo 3) — caminho assíncrono |

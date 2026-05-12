@@ -10,11 +10,10 @@ Sempre responda em **português brasileiro**.
 **Antes de carregar qualquer arquivo ou executar qualquer tarefa**, pergunte:
 
 > "Qual etapa do projeto?
-> 1. Especificação — criar ou evoluir um `spec.md` (nova demanda, mudança de escopo ou correção)
-> 2. Especificação reversa — gerar o `spec.md` a partir de código existente
-> 3. Manifest — gerar o `project-manifest.md` a partir do `spec.md`
-> 4. Tasks — gerar ou atualizar o `task.md` a partir do `project-manifest.md`
-> 5. Implementação — escrever o código SuiteScript"
+> 1. Especificação — criar ou evoluir `SPEC.md` e `MANIFEST.md` (nova demanda, mudança de escopo ou correção)
+> 2. Especificação reversa — gerar `SPEC.md` e `MANIFEST.md` a partir de código existente
+> 3. Tasks — gerar ou atualizar o `task.md` a partir do `MANIFEST.md`
+> 4. Implementação — escrever o código SuiteScript"
 
 Aguarde a resposta e então carregue apenas os recursos da etapa correspondente abaixo.
 
@@ -28,22 +27,19 @@ O fluxo padrão de um projeto ProjectDome segue esta estrutura:
 - Nova demanda com requisitos → etapa [1] Especificação
 - Projeto existente sem documentação → etapa [2] Especificação reversa
 
-**Ambos produzem o `spec.md`, que segue para:**
+**Ambos produzem `SPEC.md` + `MANIFEST.md` simultaneamente, que seguem para:**
 - Novas solicitações, mudanças de escopo ou correções → etapa [1] Especificação (modo edição)
-- Spec aprovado e estável → etapa [3] Manifest
-
-**Com o `project-manifest.md` em mãos:**
-- etapa [4] Tasks
+- Spec e manifest aprovados e estáveis → etapa [3] Tasks
 
 **Com o `task.md` em mãos:**
-- etapa [5] Implementação
+- etapa [4] Implementação
 
 > Nunca pule da especificação direto para a implementação.
-> O `spec.md` sempre precede o `project-manifest.md`.
-> O `project-manifest.md` sempre precede o `task.md`.
+> `SPEC.md` e `MANIFEST.md` são sempre gerados juntos — nunca um sem o outro.
+> O `MANIFEST.md` sempre precede o `task.md`.
 > O `task.md` sempre precede a implementação.
-> A etapa [1] pode ser executada quantas vezes forem necessárias antes de avançar para o Manifest.
-> A etapa [4] deve ser executada novamente sempre que o manifest for atualizado.
+> A etapa [1] pode ser executada quantas vezes forem necessárias antes de avançar para Tasks.
+> A etapa [3] deve ser executada novamente sempre que o manifest for atualizado.
 
 ---
 
@@ -55,10 +51,11 @@ Carregue:
 - `@.claude/agents/spec-manager/spec-manager.md`
 
 O `spec-manager` opera em dois modos detectados automaticamente pelo contexto:
-- **Modo criação** — quando não há spec existente; levanta requisitos e gera o `spec.md`
-- **Modo edição** — quando há um `spec.md` existente; incorpora novas solicitações, correções ou mudanças de escopo de forma cirúrgica
+- **Modo criação** — quando não há spec existente; levanta requisitos e gera `spec.md` + `project_manifest.md`
+- **Modo edição** — quando há artefatos existentes; incorpora novas solicitações de forma cirúrgica e atualiza ambos
 
-> Use esta etapa tanto para criar specs do zero quanto para evoluí-los após novas demandas do cliente.
+> Use esta etapa tanto para criar do zero quanto para evoluir após novas demandas do cliente.
+> Toda atualização no `SPEC.md` implica revisão do `project_manifest.md`.
 
 ---
 
@@ -67,29 +64,25 @@ O `spec-manager` opera em dois modos detectados automaticamente pelo contexto:
 Carregue:
 - `@.claude/agents/spec-reverse-builder/spec-reverse-builder.md`
 
----
-
-### 3. Manifest
-
-Carregue:
-- `@.claude/agents/manifest-builder/manifest-builder.md`
+> Gera `SPEC.md` e `project_manifest.md` simultaneamente a partir da leitura do código.
+> A leitura do código acontece uma única vez e alimenta os dois artefatos.
 
 ---
 
-### 4. Tasks
+### 3. Tasks
 
 Carregue:
 - `@.claude/agents/task-builder/task-builder.md`
 
 Inputs esperados pelo agente:
-- `project-manifest.md` — obrigatório
+- `project_manifest.md` — obrigatório
 - `task.md` anterior — opcional (se existir, será usado como base para diff)
 
 > Execute esta etapa sempre que o manifest for atualizado, mesmo que parcialmente.
 
 ---
 
-### 5. Implementação
+### 4. Implementação
 
 Carregue obrigatoriamente:
 - `@.claude/agents/suitescript-dev/suitescript-dev.md`

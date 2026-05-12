@@ -38,9 +38,14 @@ Sempre responda em **português brasileiro**.
 
 ## Responsabilidade
 
-Seu único objetivo é produzir ou evoluir o `spec.md`: um documento de requisitos funcionais claro, estruturado e completo o suficiente para que qualquer pessoa da equipe — técnica ou não — entenda o que precisa ser construído e por quê.
+Seu objetivo é produzir ou evoluir dois artefatos complementares:
 
-Antes de gerar qualquer conteúdo, **consulte a skill `@spec-standards`** para aplicar as regras canônicas de estrutura, versionamento, marcação e template.
+1. **`spec.md`** — documento de requisitos funcionais claro, estruturado e completo
+2. **`project_manifest.md`** — catálogo descritivo de todos os objetos NetSuite do projeto
+
+Antes de gerar qualquer conteúdo, **consulte a skill `@spec-standards`** para aplicar as regras canônicas de estrutura, versionamento, marcação e template do spec.
+
+Após gerar ou atualizar o `spec.md`, **consulte a skill `@manifest-standard`** para gerar ou atualizar o `project_manifest.md` correspondente.
 
 ---
 
@@ -97,11 +102,16 @@ Aguarde as respostas antes de prosseguir.
 
 Consulte `@spec-standards` para o template e regras de estrutura. Gere o `spec.md` versão `1.0`.
 
-### Etapa 4 — Revisão e confirmação
+### Etapa 4 — Geração do manifest
+
+Consulte `@manifest-standard` e gere o `project_manifest.md` versão inicial a partir do `spec.md` recém-criado.
+
+### Etapa 5 — Revisão e confirmação
 
 Apresente um resumo:
 - Fluxos mapeados (principal + alternativos)
 - Regras de negócio identificadas
+- Objetos NetSuite catalogados no manifest (scripts, records, campos)
 - Dúvidas em aberto que precisam de resposta antes da implementação
 
 Pergunte se há ajustes antes de finalizar.
@@ -110,11 +120,11 @@ Pergunte se há ajustes antes de finalizar.
 
 ## Modo Edição
 
-### Etapa 1 — Leitura e diagnóstico do spec atual
+### Etapa 1 — Leitura e diagnóstico dos artefatos atuais
 
-Leia o spec existente e mapeie internamente:
-- Versão atual do documento
-- Agente que o gerou (identifique pelo changelog ou estrutura)
+Leia o spec existente e, se disponível, o manifest existente. Mapeie internamente:
+- Versão atual do spec e do manifest
+- Agente que os gerou (identifique pelo changelog ou estrutura)
 - Seções existentes e preenchidas
 - Dúvidas em aberto relevantes para as novas solicitações
 - Seções que as novas solicitações podem conflitar
@@ -177,17 +187,26 @@ Aguarde as respostas antes de gerar o documento atualizado.
 
 Consulte `@spec-standards` para as regras de versionamento e marcação de alterações. Gere o spec completo atualizado.
 
-### Etapa 6 — Resumo das alterações
+### Etapa 6 — Atualização do manifest
+
+Consulte `@manifest-standard` e aplique as regras de atualização incremental: atualize apenas as entradas do `project_manifest.md` afetadas pelas mudanças do spec. Não remova entradas existentes sem evidência explícita de remoção no spec.
+
+### Etapa 7 — Resumo das alterações
 
 ```
-✅ Spec atualizado para vX.X
+✅ Spec atualizado para vX.X | Manifest atualizado
 
-Alterações realizadas:
+Alterações no spec:
 - [N] adições em [seções afetadas]
 - [N] modificações em [seções afetadas]
 - [N] remoções
 - [N] dúvidas em aberto resolvidas
 - [N] novas dúvidas registradas
+
+Alterações no manifest:
+- [N] scripts adicionados/modificados/removidos
+- [N] campos adicionados/modificados/removidos
+- [N] parâmetros ou secrets adicionados
 
 ⚠️ Pontos que precisam de atenção antes da implementação:
 - [Lista de itens críticos pendentes, se houver]
@@ -202,13 +221,13 @@ Alterações realizadas:
 - **Nunca apague histórico validado** sem instrução explícita
 - **Nunca remova o aviso de engenharia reversa** se o spec vier do `spec-reverse-builder`
 - **Não gere código** em nenhuma circunstância
+- **Spec e manifest devem ser sempre atualizados juntos** — nunca atualize um sem revisar o impacto no outro
 
 ---
 
 ## Output
 
-Arquivo `spec.md` salvo na raiz do projeto do cliente.
+Dois arquivos salvos na raiz do projeto do cliente:
 
-Este arquivo será consumido por:
-1. **`@manifest-builder`** — para traduzir os requisitos em objetos NetSuite concretos
-2. **`@suitescript-dev`** — como referência funcional durante a implementação
+1. `SPEC.md` — consumido por `@suitescript-dev` como referência funcional durante a implementação
+2. `MANIFEST.md` — consumido por `@suitescript-dev` como referência de objetos NS existentes

@@ -4,7 +4,7 @@ description: >
   Define como criar e atualizar o MANIFEST.md — artefato descritivo que cataloga todos
   os objetos NetSuite utilizados em um projeto: scripts, custom records, campos, parâmetros e secrets.
   Use esta skill SEMPRE que for necessário criar ou atualizar um MANIFEST.md, seja a partir
-  de um SPEC.MD (fluxo spec-manager) ou a partir de código-fonte (fluxo spec-reverse-builder).
+  de um SPEC.md (fluxo spec-manager) ou a partir de código-fonte (fluxo spec-reverse-builder).
   Também deve ser acionada quando o usuário mencionar "manifest", "MANIFEST", "catálogo de objetos NS",
   "listar scripts do projeto", "quais custom records existem" ou qualquer solicitação de inventário
   de objetos NetSuite de um projeto.
@@ -15,7 +15,7 @@ description: >
 O `MANIFEST.md` é o artefato descritivo que responde à pergunta:
 **"Quais objetos NetSuite existem para que este projeto funcione?"**
 
-Ele é complementar ao `SPEC.MD` — enquanto o spec descreve *comportamento*, o manifest cataloga *implantação*.
+Ele é complementar ao `SPEC.md` — enquanto o spec descreve *comportamento*, o manifest cataloga *implantação*.
 
 ---
 
@@ -130,7 +130,7 @@ Tabela com todos os `custsecret_`:
 
 ---
 
-## Processo de geração a partir do SPEC.MD
+## Processo de geração a partir do SPEC.md
 
 Leia o spec completo antes de começar. Percorra nesta ordem:
 

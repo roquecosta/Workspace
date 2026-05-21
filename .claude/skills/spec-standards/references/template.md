@@ -1,4 +1,4 @@
-# Template canônico — `SPEC.MD`
+# Template canônico — `SPEC.md`
 
 Use esta estrutura para todo spec gerado na ProjectDome. Omita seções sem conteúdo. Não adicione seções fora deste padrão sem justificativa registrada no changelog.
 

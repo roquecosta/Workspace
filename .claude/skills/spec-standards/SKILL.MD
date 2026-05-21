@@ -1,13 +1,13 @@
 ---
 name: "spec-standards"
-description: "Consulte esta skill SEMPRE que for criar, editar ou versionar um SPEC.MD — independente do agente que está executando a tarefa. Isso inclui: spec-manager (modo criação e modo edição), spec-reverse-builder, e qualquer outro agente que produza ou altere documentos de requisitos funcionais na ProjectDome. A skill define as regras canônicas de estrutura, versionamento, marcação de alterações e changelog que todos os specs devem seguir."
+description: "Consulte esta skill SEMPRE que for criar, editar ou versionar um SPEC.md — independente do agente que está executando a tarefa. Isso inclui: spec-manager (modo criação e modo edição), spec-reverse-builder, e qualquer outro agente que produza ou altere documentos de requisitos funcionais na ProjectDome. A skill define as regras canônicas de estrutura, versionamento, marcação de alterações e changelog que todos os specs devem seguir."
 ---
 
 # Spec Standards
 
 Esta skill define os **padrões canônicos** para criação, edição e versionamento de specs na ProjectDome.
 
-Todo agente que produz ou altera um `SPEC.MD` deve consultar esta skill antes de gerar qualquer conteúdo.
+Todo agente que produz ou altera um `SPEC.md` deve consultar esta skill antes de gerar qualquer conteúdo.
 
 ---
 
@@ -22,7 +22,7 @@ Todo agente que produz ou altera um `SPEC.MD` deve consultar esta skill antes de
 
 ## Estrutura e template
 
-O template canônico do `SPEC.MD` está em:
+O template canônico do `SPEC.md` está em:
 
 ```
 references/template.md
@@ -93,4 +93,4 @@ Use a tabela padrão da seção 11 do template. Status possíveis:
 
 ## Referências
 
-- `references/template.md` — template canônico do `SPEC.MD`
+- `references/template.md` — template canônico do `SPEC.md`

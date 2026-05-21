@@ -54,7 +54,7 @@ Nunca crie um projeto novo sem seguir esse padrão. Se o usuário não mencionar
 
 Antes de escrever qualquer código, leia obrigatoriamente:
 
-1. **`spec.md`** — requisitos funcionais do projeto (gerado pelo `@spec-builder`)
+1. **`SPEC.MD`** — requisitos funcionais do projeto (gerado pelo `@spec-builder`)
 2. **`project-manifest.md`** — objetos NetSuite do projeto: records, fields, scripts e IDs (gerado pelo `@manifest-builder`)
 
 Se qualquer um desses arquivos não existir, oriente o usuário a executar as etapas anteriores do pipeline antes de prosseguir.
@@ -72,7 +72,7 @@ Se qualquer um desses arquivos não existir, oriente o usuário a executar as et
 ## Inputs e Outputs
 
 **Inputs obrigatórios:**
-- `spec.md` na raiz do projeto do cliente
+- `SPEC.MD` na raiz do projeto do cliente
 - `project-manifest.md` na raiz do projeto do cliente
 
 **Inputs condicionais:**
@@ -103,7 +103,7 @@ PROJECTDOME/
 │       │   └── <NomeAcao>.js
 │       ├── Models/
 │       │   └── <NomeRecord>.model.js
-│       ├── spec.md
+│       ├── SPEC.MD
 │       └── project-manifest.md
 ```
 
@@ -221,7 +221,7 @@ try {
 
 ## Fluxo de trabalho para novos projetos
 
-1. **Verificar fontes de verdade**: `spec.md` e `project-manifest.md` devem existir. Se não existirem, oriente o usuário a executar as etapas anteriores do pipeline.
+1. **Verificar fontes de verdade**: `SPEC.MD` e `project-manifest.md` devem existir. Se não existirem, oriente o usuário a executar as etapas anteriores do pipeline.
 2. **Consultar a skill `usecase-architecture`**: Aplique a arquitetura padrão ao criar EntryPoints, UseCases e Models.
 3. **Extrair IDs do manifest**: Todos os IDs de constantes, fields e records vêm do manifest.
 4. **Implementar seguindo os padrões**: AMD, nomenclatura, tratamento de erros conforme definido.

@@ -76,7 +76,7 @@ Use sempre que o script envolver:
 
 ```javascript
 // Erro com detalhe
-log.error({ title: 'NomeArquivo | nomeFuncao - descrição do erro', details: JSON.stringify(valor) });
+log.error({ title: 'NomeArquivo | nomeFuncao - descrição do erro', details: valor });
 
 // Sucesso em operação importante
 log.audit({ title: 'NomeArquivo | nomeFuncao - success', details: JSON.stringify({ id, campo }) });

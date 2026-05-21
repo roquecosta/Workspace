@@ -3,7 +3,12 @@
     "allow": [
       "Bash(mkdir -p \"C:/Users/Roque/Documents/ProjectDome/Teste/Case3/src/FileCabinet/SuiteScripts/ProjectDome/LMXIntegration/entry_points\")",
       "Bash(mkdir -p \"C:/Users/Roque/Documents/ProjectDome/Teste/Case3/src/FileCabinet/SuiteScripts/ProjectDome/LMXIntegration/client\")",
-      "Bash(mkdir -p \"C:/Users/Roque/Documents/ProjectDome/Teste/Case3/src/FileCabinet/SuiteScripts/ProjectDome/LMXIntegration/use_cases\")"
+      "Bash(mkdir -p \"C:/Users/Roque/Documents/ProjectDome/Teste/Case3/src/FileCabinet/SuiteScripts/ProjectDome/LMXIntegration/use_cases\")",
+      "Skill(spec-standards)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Skill(manifest-standards)",
+      "Skill(usecase-architecture)"
     ]
   },
   "hooks": {
@@ -20,4 +25,3 @@
     ]
   }
 }
-

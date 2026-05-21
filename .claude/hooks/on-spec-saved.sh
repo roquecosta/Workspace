@@ -1,12 +1,12 @@
 #!/bin/bash
 # on-spec-saved.sh
 # Disparado pelo hook PostToolUse sempre que um arquivo é salvo/editado.
-# Se o arquivo for um SPEC.MD, invoca o manifest-builder em modo diff ou criação.
+# Se o arquivo for um SPEC.md, invoca o manifest-builder em modo diff ou criação.
 
 FILE_PATH="$1"
 
-# Ignora se não for um SPEC.MD
-if [[ "$FILE_PATH" != *"/SPEC.MD" ]]; then
+# Ignora se não for um SPEC.md
+if [[ "$FILE_PATH" != *"/SPEC.md" ]]; then
   exit 0
 fi
 
@@ -22,7 +22,7 @@ else
   MODE_INSTRUCTION="Não existe manifest ainda. Gere o project-manifest.md completo a partir do spec, usando o template em assets/project-manifest-template.md. Não faça perguntas — use as convenções padrão da ProjectDome para prefixos e nomenclatura."
 fi
 
-echo "[hook] SPEC.MD modificado: $FILE_PATH"
+echo "[hook] SPEC.md modificado: $FILE_PATH"
 echo "[hook] Modo: $MODE — disparando manifest-builder..."
 
 claude -p \

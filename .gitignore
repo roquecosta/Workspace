@@ -1,12 +1,8 @@
-Extra
-.idea
-AMAM
-Gafisa
-GrupoFF
-Gupy
-NetsuiteTools
-Pipefy
-RGM
-StoccheForbes
-TresM
-NetsuiteTools.zip
+# 1. Ignore all files and directories at the root
+/*
+
+# 2. Allow the .gitignore file itself (optional but recommended)
+!.gitignore
+
+# 3. Allow the specific folder you want to keep
+!.claude

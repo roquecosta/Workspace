@@ -1,5 +1,5 @@
 ---
-name: netsuite-usecase-architecture
+name: usecase-architecture
 description: >
   Architectural reference for creating new NetSuite scripts following the EntryPoint / UseCase / Model pattern used at ProjectDome.
   Use this skill ALWAYS when creating, scaffolding, or modifying NetSuite scripts, including UserEvent (UE), MapReduce (MR),

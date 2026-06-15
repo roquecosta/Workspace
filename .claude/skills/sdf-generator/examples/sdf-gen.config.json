@@ -1,0 +1,19 @@
+{
+  "_comment": "Coloque este arquivo ao lado do manifest do projeto (mesma pasta). O gen_objects.py o carrega automaticamente. Tudo é opcional.",
+
+  "selectTargetById": {
+    "custrecord_pd_pya_status": "[scriptid=customlist_pd_pya_prop_aloc_status]",
+    "custrecord_pd_pya_last_finished_step": "[scriptid=customlist_pd_pya_prop_aloc_steps]",
+    "custrecord_pd_pya_period": "-105"
+  },
+
+  "selectTargetByLabel": [
+    ["apropriação imobiliária", "[scriptid=customrecord_pd_pya_property_allocation]"],
+    ["empreendimento", "[scriptid=customrecord_cseg_pd_projeto]"]
+  ],
+
+  "unsupportedTags": ["aidescription", "enabletextenhance"],
+
+  "skip": [],
+  "only": []
+}

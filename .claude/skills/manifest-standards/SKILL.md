@@ -94,6 +94,7 @@ Uma subseção por record, no formato:
 **Regras:**
 - Incluir apenas campos que aparecem explicitamente no spec ou no código
 - Campos cujo internal ID não está disponível: usar nome descritivo e marcar com `*`
+- **Limite de 40 caracteres no internal ID**: todo internal ID de campo customizado deve ter no máximo **40 caracteres**, contando o prefixo (`custrecord_`, etc.). Ver a regra completa em [Regras gerais](#regras-gerais).
 - Não inventar campos — se não há evidência, não listar
 - Documentar valores de listas inline na descrição quando o spec os menciona (ex: `Status: Em Aberto(1), Pago(2)`)
 
@@ -172,6 +173,10 @@ Quando o spec muda de versão:
 - **Não inventar**: se o spec não menciona um campo ou script, não incluir
 - **Não omitir**: se o spec menciona um objeto, ele deve aparecer no manifest
 - **IDs reais têm prioridade**: se o código ou spec fornecer o ID real, usá-lo; nunca sobrescrever um ID real com um inferido
+- **Limite de 40 caracteres em IDs de campos customizados**: o internal ID de qualquer campo customizado — `custrecord_`, `custbody_`, `custcol_`, `custentity_`, `custitem_` — não pode exceder **40 caracteres no total, contando o prefixo**. Validar o comprimento de todo ID (real ou inferido) antes de registrá-lo no manifest:
+    - Se um **ID real** fornecido pelo spec/código ultrapassar 40 caracteres, registrá-lo mesmo assim, mas sinalizar com a nota `⚠ excede 40 caracteres — inválido no NetSuite` para revisão.
+    - Se um **ID inferido** ultrapassar 40 caracteres, abreviar o nome descritivo de forma consistente e legível (sem cortar o prefixo) até caber no limite, e marcar com `*` para confirmação no ambiente.
+    - Nunca **gerar** um ID inferido com mais de 40 caracteres.
 - **Uma linha por objeto**: sem agrupamentos implícitos ou subentradas aninhadas nas tabelas
 - **Descrições no infinitivo**: "Armazena o payload JSON" ✓ — "Armazena payloads JSON" ✓ — "Este campo armazena..." ✗
 - **Manter ordenação consistente**: scripts na ordem em que aparecem no spec; campos na ordem de relevância (chaves primeiro, depois vínculos, depois flags)

@@ -93,11 +93,21 @@ Quando um artefato-fonte muda:
 3. **Não remova** entradas sem evidência explícita de remoção.
 4. Atualize o cabeçalho (`Gerado em`, `Versão`).
 
+Concluída a atualização, **avise** que os objetos XML (SDF) podem ter ficado desatualizados e
+**ofereça ao Dev** regenerá-los pela skill `sdf-generator` (`@.claude/skills/sdf-generator/SKILL.md`),
+que projeta o manifest em objetos XML. Quando aceito, a regeneração usa o **diff do manifest** para
+materializar apenas os objetos afetados, sem reescrever os demais. Isto é **aviso, não bloqueio**: o
+manifest é entregue mesmo que a regeneração não seja feita — no mesmo espírito das mudanças livres do
+`suitescript-dev`.
+
 ---
 
 ## Princípios
 
 - O manifest é catálogo, não documentação de comportamento.
+- O manifest é a **fonte**; a skill `sdf-generator` é uma **projeção read-only** dele — lê o manifest
+  para gerar os objetos XML (SDF), nunca o edita nem interpreta comportamento. A direção da dependência
+  é sempre `sdf-generator → MANIFEST`.
 - IDs reais sempre têm prioridade sobre inferidos.
 - Distinga, quando souber, **records criados pelo projeto** de **records pré-existentes do cliente** (estes últimos podem ir para a seção de Campos Customizados em Records Nativos, ou ser marcados como pré-existentes).
 - Na dúvida entre incluir algo que parece comportamento: **não inclua**.

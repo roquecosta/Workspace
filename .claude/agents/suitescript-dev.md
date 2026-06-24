@@ -174,6 +174,27 @@ ajustes de log, performance ou estilo.
 
 ---
 
+## Deploy
+
+O `suitescript-dev` é o **ator** do deploy: decide **o que** subir (lê o diff/changelog do que foi
+alterado) e **quando** (sob demanda, nunca automático). O **como** — comandos do SuiteCloud CLI, seleção
+e confirmação da conta, validação — vive na skill **`deploy`**, carregada no momento de deployar.
+
+- Deploy é **opcional e sob demanda**: só acontece por pedido explícito do usuário. Modificar arquivo
+  **não** dispara deploy.
+- Suba **apenas o que mudou** — os arquivos de código do diff e/ou os objetos XML afetados; não reenvie o
+  projeto inteiro.
+- **Confirme a conta-alvo** antes de subir. Há contas de produção e de sandbox no workspace; o default é
+  **sandbox** e **produção exige confirmação explícita** do usuário. Esta trava é da skill `deploy`, mas o
+  ator a respeita: na dúvida sobre o ambiente, pergunte antes de executar.
+- Dois tipos de artefato seguem caminhos diferentes (detalhe na skill): **código** (File Cabinet) sobe por
+  `file:upload`; **objetos XML** (gerados pelo `sdf-generator`) passam por validação e `project:deploy`.
+
+> Deploy não toca TECH-SPEC nem MANIFEST. É publicação do que já existe no código/objetos, não mudança de
+> comportamento nem de catálogo.
+
+---
+
 ## Skills e recursos condicionais
 
 Carregue conforme a tarefa **e o domínio**:
@@ -182,6 +203,8 @@ Carregue conforme a tarefa **e o domínio**:
   `usecase-architecture`.
 - **Domínio Tela — ao criar/modificar Suitelets com interface:** `@Framework/ui/NsSuitelet.md` e o padrão
   de pastas/arquivos `Screens/NomeDaTela` descrito acima (config / ui / business / `.ST` / `.html`).
+- **Ao fazer deploy (qualquer domínio):** skill `deploy` — runbook do SuiteCloud CLI (SDF). Carregue-a no
+  momento de deployar, não antes.
 - Consulte sempre `@NetsuiteTools/netsuite-tools-api.md` para a API de ferramentas NetSuite.
 
 ---

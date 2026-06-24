@@ -32,8 +32,8 @@ Dois artefatos governam cada projeto:
 
 Aguarde a resposta e carregue apenas os recursos da etapa correspondente.
 
-> As rotas sob demanda (brainstorm, especificação reversa, quebra em tasks) **não** aparecem no
-> menu inicial. São acionadas apenas por solicitação explícita do usuário.
+> As rotas sob demanda (brainstorm, revisão de consistência, geração de objetos XML) **não** aparecem
+> no menu inicial. São acionadas apenas por solicitação explícita do usuário.
 
 ---
 
@@ -48,12 +48,20 @@ ENTRADA B: TECH-SPEC já escrito ─────────────┐
                                              ▼
                        manifest-builder gera/atualiza o MANIFEST (fonte canônica)
                                              ▼
-                       suitescript-dev lê skills + TECH-SPEC + MANIFEST ─► código
+                   ┌─────────────────────────┴──────────────────────────┐
+                   ▼                                                      ▼
+ suitescript-dev: skills + TECH-SPEC + MANIFEST ─► código   sdf-generator: projeta MANIFEST ─► objetos XML
+                   └─────────────────────────┬──────────────────────────┘
+                                             ▼
+                       suitescript-dev faz o deploy dos arquivos modificados (opcional, sob demanda)
                                              ▼
 ATUALIZAÇÃO: TECH-SPEC atualizado ─► discute ─► manifest-builder reflete ─► suitescript-dev reflete no código
+             (opcional: sdf-generator regenera os objetos XML do diff ─► deploy)
 ```
 
 > Nunca pule para a implementação sem o MANIFEST atualizado. O MANIFEST sempre precede o código.
+> A geração de objetos XML e o deploy são **opcionais e sob demanda** — disparados só por pedido
+> explícito do usuário, nunca automaticamente.
 
 ---
 
@@ -95,6 +103,7 @@ decisões de arquitetura) como fonte vinculante de estrutura. Implemente um recu
 Carregue condicionalmente, apenas quando necessário:
 - **Ao criar/modificar scripts com EntryPoint / UseCase / Model:** skill `usecase-architecture`
 - **Ao criar/modificar Suitelets:** `@Framework/ui/NsSuitelet.js`
+- **Ao fazer deploy (código ou objetos XML) via SuiteCloud CLI:** skill `deploy`
 
 **No fluxo de atualização:** quando o TECH-SPEC for atualizado e o MANIFEST refletido, o
 `suitescript-dev` lê **o que mudou** (changelog do TECH-SPEC + diff do MANIFEST) e reflete apenas
@@ -105,6 +114,11 @@ Refatoração, correção de bug de implementação, logs, performance e estilo 
 `suitescript-dev` em **modo livre**, direto no código, **sem tocar** TECH-SPEC nem MANIFEST. Internal
 IDs continuam vindo do MANIFEST. Se uma mudança livre alterar comportamento observável, o agente a
 faz e **avisa** que aquilo deveria ir para o TECH-SPEC — não bloqueia.
+
+**Deploy:** após modificar arquivos — código ou objetos XML — o deploy pode ser feito pelo
+`suitescript-dev`, **opcional e sob demanda** (só por pedido explícito do usuário). O `suitescript-dev`
+é o **ator** (decide o que e quando) e carrega a skill `deploy` como **runbook** do procedimento SDF
+(seleção/confirmação da conta, validação e comandos do SuiteCloud CLI).
 
 ---
 
@@ -132,15 +146,22 @@ nunca edita o TECH-SPEC diretamente.
 Carregue:
 - `@.claude/skills/architecture-brainstorm/SKILL.md`
 
-### Quebra em tasks (projetos grandes de escopo fechado)
+### Geração de objetos XML / SDF (sdf-generator)
 
-Gatilho: apenas quando solicitado, tipicamente em projetos grandes com escopo definido onde um
-checklist de progresso agrega valor.
+Gatilho: o usuário pede para gerar/materializar os objetos XML a partir do MANIFEST ("gera o XML",
+"materializa os objetos", "exporta os objetos SDF"). Acionada em dois momentos:
+
+- **Após uma atualização do MANIFEST** — regenera apenas os objetos do diff.
+- **De forma avulsa, sobre um MANIFEST já existente** — sem nenhuma atualização prévia, gera os
+  objetos pedidos a partir do catálogo atual.
+
+Projeção **read-only** do MANIFEST: lê o catálogo e gera os XML, **nunca** edita o MANIFEST nem o
+TECH-SPEC e não interpreta comportamento. Pré-condição: MANIFEST atualizado (mesma trava da
+implementação).
 
 Carregue:
-- `@.claude/agents/task-builder/task-builder.md`
+- `@.claude/skills/sdf-generator/SKILL.md`
 
----
 
 ## Contexto do workspace
 
@@ -158,6 +179,8 @@ Carregue:
   apenas propõem trechos que o usuário cola.
 - O **MANIFEST** cataloga objetos, nunca comportamento. Regra de negócio/cálculo vive no TECH-SPEC.
 - O **TECH-SPEC** referencia o MANIFEST; nunca redefine campos.
+- A **geração de objetos XML** (`sdf-generator`) é projeção read-only do MANIFEST: lê o catálogo e
+  materializa os XML, nunca edita o MANIFEST nem o TECH-SPEC. Direção da dependência: `sdf-generator → MANIFEST`.
 - Nunca implemente **recurso novo ou mudança de comportamento** sem MANIFEST atualizado. (Mudanças
   livres — refatoração, logs, performance, estilo — são exceção: não dependem do MANIFEST, mas também
   não criam objetos novos.)

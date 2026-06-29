@@ -36,14 +36,21 @@ Regras invioláveis deste runbook:
 4. **Valide antes de deployar** (`project:validate`), sempre que houver objetos envolvidos.
 5. Fluxo saudável é **sandbox → produção**: suba e teste no sandbox antes de promover para produção.
 
-Para ver os authids configurados:
+Para ver os authids configurados e o default atual do projeto:
 
-```bash
+```powershell
 suitecloud account:manageauth --list
 ```
 
-Os comandos rodam contra a conta configurada no projeto; use **`--authid <id>`** para mirar
-explicitamente uma conta e não depender do default implícito.
+> **Importante:** os comandos `file:upload`, `project:validate` e `project:deploy` **não aceitam
+> `--authid` como flag**. Eles usam sempre o authid **default configurado no projeto** (`.suitecloud`
+> na raiz). Para trocar de conta antes de deployar, use:
+>
+> ```powershell
+> suitecloud account:setup:ci --select <authid>
+> ```
+>
+> Confirme o authid ativo antes de cada deploy para garantir que está apontando para o ambiente correto.
 
 ---
 
@@ -64,8 +71,8 @@ menção explícita ao `MANIFEST.md`.
 - **SuiteCloud CLI instalado** (`@oracle/suitecloud-cli`). Verifique com `suitecloud --version`.
 - **Projeto SDF válido** (ACP): contém `src/manifest.xml` e `src/deploy.xml`. Só é deployado o que
   estiver referenciado no `deploy.xml`.
-- **Conta autenticada** — um `authid` configurado (via `account:setup` interativo ou `account:savetoken`
-  com token/TBA para ambientes não-interativos).
+- **Conta autenticada** — um `authid` configurado (via `account:setup` interativo ou `account:setup:ci`
+  com OAuth 2.0 para ambientes não-interativos) e definido como default do projeto.
 
 ---
 
@@ -79,8 +86,8 @@ Arquivos `.js`, `.html` etc. que vivem no **File Cabinet** (`src/FileCabinet/Sui
 das mudanças do `suitescript-dev` no domínio SuiteScript e Tela. Sobem direto, sem precisar de
 `deploy.xml`/validação de objeto:
 
-```bash
-suitecloud file:upload --paths "/SuiteScripts/Cliente/Arquivo.js" --authid <id>
+```powershell
+suitecloud file:upload --paths "/SuiteScripts/Cliente/Arquivo.js"
 ```
 
 O `--paths` recebe o **caminho NetSuite** (a partir de `/SuiteScripts/...`), não o caminho local. Para
@@ -99,12 +106,12 @@ Objetos SDF gerados pelo **`sdf-generator`** (custom records, script deployment 
 vivem em `src/Objects/*.xml`. Objetos **não** sobem por `file:upload`; vão pelo pipeline de deploy, que
 respeita o `deploy.xml`:
 
-```bash
+```powershell
 # 1) validação prévia (recomendado: server-side)
-suitecloud project:validate --server --authid <id>
+suitecloud project:validate --server
 
 # 2) deploy
-suitecloud project:deploy --authid <id>
+suitecloud project:deploy
 ```
 
 O `project:deploy` zipa e envia **tudo que está referenciado no `deploy.xml`**. Para subir só um
@@ -120,7 +127,8 @@ deploy parcial de objetos (não há upload granular de um objeto isolado equival
 
 1. **Receba do ator** o conjunto a deployar (lista de arquivos de código e/ou objetos). Não infira; se
    vier vago, pergunte.
-2. **Confirme a conta-alvo.** Mostre o `authid`/ambiente. Se for produção, **exija confirmação explícita**.
+2. **Confirme a conta-alvo.** Liste os authids e mostre o default atual. Se for produção, **exija
+   confirmação explícita**. Se precisar trocar, use `account:setup:ci --select <authid>`.
 3. **Classifique** cada item: código (Caminho A) ou objeto (Caminho B).
 4. **Se houver objetos:** `project:validate --server` primeiro. Se falhar, pare e reporte os erros — não
    deploye sobre validação que falhou.
@@ -141,14 +149,15 @@ Não reenvie o projeto inteiro a cada mudança. O default é incremental, espelh
 
 ## Erros comuns → correção
 
-| Sintoma                                                            | Causa provável                                              | Correção                                                                    |
-| ------------------------------------------------------------------ | ----------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `You have not configured ... / no account set up`                  | authid não configurado para o projeto                       | `account:setup` (interativo) ou `account:savetoken`; depois use `--authid`. |
-| Validação falha em "account settings" / feature dependency         | feature exigida pelo objeto não habilitada / não declarada  | Habilitar a feature na conta ou declará-la no `manifest.xml`.               |
-| `Missing dependencies` na validação                                | dependências ausentes no `manifest.xml`                     | `suitecloud project:adddependencies`, depois validar de novo.              |
-| Arquivo "subiu" mas não aparece                                    | caminho NetSuite errado no `--paths`                        | Conferir derivação do caminho (cortar até `FileCabinet`, barras `/`).      |
-| Objeto não foi deployado apesar de existir em `Objects/`           | objeto não referenciado no `deploy.xml`                     | Adicionar o objeto ao `deploy.xml`.                                        |
-| Erro de permissão/role ao deployar                                 | role do authid sem permissão SDF na conta                   | Usar authid com role adequada (SDF/administrator) para aquele ambiente.    |
+| Sintoma | Causa provável | Correção |
+| --- | --- | --- |
+| `unknown option '--authid'` em file:upload / project:deploy | Flag inválida — esses comandos não aceitam --authid | Remova a flag; troque o authid default com `account:setup:ci --select <id>` antes de deployar |
+| `You have not configured ... / no account set up` | authid não configurado para o projeto | `account:setup` (interativo) ou `account:setup:ci`; defina o default. |
+| Validação falha em "account settings" / feature dependency | feature exigida pelo objeto não habilitada / não declarada | Habilitar a feature na conta ou declará-la no `manifest.xml`. |
+| `Missing dependencies` na validação | dependências ausentes no `manifest.xml` | `suitecloud project:adddependencies`, depois validar de novo. |
+| Arquivo "subiu" mas não aparece | caminho NetSuite errado no `--paths` | Conferir derivação do caminho (cortar até `FileCabinet`, barras `/`). |
+| Objeto não foi deployado apesar de existir em `Objects/` | objeto não referenciado no `deploy.xml` | Adicionar o objeto ao `deploy.xml`. |
+| Erro de permissão/role ao deployar | role do authid sem permissão SDF na conta | Usar authid com role adequada (SDF/administrator) para aquele ambiente. |
 
 ---
 
@@ -174,3 +183,4 @@ Recomendação deste runbook:
 - Não edita `MANIFEST.md` nem `TECH-SPEC.md`.
 - Não deploya em produção sem confirmação explícita.
 - Não reescreve o projeto inteiro quando o pedido é incremental.
+- Não usa `--authid` em `file:upload`, `project:validate` ou `project:deploy`.

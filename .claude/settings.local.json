@@ -13,7 +13,11 @@
       "Bash(suitecloud file:upload *)",
       "Bash(suitecloud project:validate *)",
       "Bash(suitecloud project:deploy *)",
-      "Bash(suitecloud project:adddependencies)"
+      "Bash(suitecloud project:adddependencies)",
+      "PowerShell(Out-Null *)",
+      "Bash(python -c ' *)",
+      "Bash(python -c \"import xml.etree.ElementTree as ET; ET.parse\\('customrecord_pd_pya_exchanges.xml'\\); print\\('XML well-formed \\(ElementTree\\)'\\)\")",
+      "Bash(python3 -c \"import xml.etree.ElementTree as ET; ET.parse\\('customrecord_pd_pya_exchanges.xml'\\); print\\('XML well-formed \\(ElementTree\\)'\\)\")"
     ]
   },
   "hooks": {

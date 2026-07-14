@@ -18,3 +18,13 @@ Essas duas numerações coincidiam antes da remoção porque não havia "buracos
 **Convenção pré-existente e não tocada:** os métodos `updateStepN/clearStepN` dentro de `Models/Exchanges.model.js`, `Brokerages.model.js`, `Neutralizations.model.js` usam um número de sufixo que é sempre `STEPS.value + 1` (ex.: `updateStep15` para `exchange-poc`, que hoje vale 12). Essa é uma inconsistência cosmética antiga, não criada por esta mudança — não renomeei esses métodos (só removi os de mandate-exchange/property) porque não foi pedido e o rename tocaria vários call sites sem ganho funcional. Ver [[user_profile]] para preferências gerais do usuário.
 
 Ver também `Docs/prototipo/app.js` (mockup estático de UI) — tem um esquema de stepId totalmente diferente (`mandato-terreno`, `permuta-poc`, etc.) e não foi tocado por ser apenas protótipo de design, não código em produção.
+
+**Quarto lugar com numeração hardcoded, descoberto em 2026-07-14:** `Screens/PYA_PropertyAllocation.config.js`
+tem um objeto `STEP_HELP` (texto de ajuda do botão de ajuda de cada etapa) cujas chaves usam o `title`
+com o número da etapa escrito à mão (ex.: `title: '16. Neutralização Fiscal Patrimonial'`). Esse título
+**não é derivado** do array de exibição (`STEPS`, topo do arquivo, que já tem `num: '16'` etc.) — são dois
+lugares redundantes. Na renumeração 14-19→12-17, o `STEP_HELP` ficou dessincronizado em cadeia:
+`neutral-tax-prop` (etapa 16 real) tinha title `'17. ...'`, `neutral-tax-res` (17 real) tinha `'18. ...'`,
+`neutral-soc` (18 real) tinha `'16. ...'`. Corrigido nesta data. Se houver nova renumeração de etapas no
+futuro, conferir também `STEP_HELP` além dos 2 lugares já documentados acima (steps.constants.js e os 3
+`STEPS_ORDER`) — são pelo menos 4 pontos de numeração manual nesse projeto.

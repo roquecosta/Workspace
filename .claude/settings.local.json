@@ -20,7 +20,9 @@
       "Bash(python3 -c \"import xml.etree.ElementTree as ET; ET.parse\\('customrecord_pd_pya_exchanges.xml'\\); print\\('XML well-formed \\(ElementTree\\)'\\)\")",
       "Bash(printf '<deploy>\\\\r\\\\n    <objects>\\\\r\\\\n        <path>~/Objects/customrecord_pd_pya_neutralizations.xml</path>\\\\r\\\\n    </objects>\\\\r\\\\n</deploy>\\\\r\\\\n')",
       "Bash(xxd src/deploy.xml)",
-      "PowerShell(suitecloud account:manageauth *)"
+      "PowerShell(suitecloud account:manageauth *)",
+      "Bash(suitecloud account:setup --help)",
+      "Bash(suitecloud --help)"
     ]
   },
   "hooks": {

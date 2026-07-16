@@ -22,7 +22,8 @@
       "Bash(xxd src/deploy.xml)",
       "PowerShell(suitecloud account:manageauth *)",
       "Bash(suitecloud account:setup --help)",
-      "Bash(suitecloud --help)"
+      "Bash(suitecloud --help)",
+      "Bash(python3 -c ' *)"
     ]
   },
   "hooks": {

@@ -23,7 +23,10 @@
       "PowerShell(suitecloud account:manageauth *)",
       "Bash(suitecloud account:setup --help)",
       "Bash(suitecloud --help)",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(awk 'NR<30{print;next} {gsub\\(/\\\\<FALHA\\\\>/,\"CONCLUIDO_COM_ERROS\"\\); print}' SPEC.md)",
+      "Bash(mv SPEC.md.tmp SPEC.md)",
+      "Bash(npx suitecloud *)"
     ]
   },
   "hooks": {

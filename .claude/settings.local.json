@@ -26,7 +26,8 @@
       "Bash(python3 -c ' *)",
       "Bash(awk 'NR<30{print;next} {gsub\\(/\\\\<FALHA\\\\>/,\"CONCLUIDO_COM_ERROS\"\\); print}' SPEC.md)",
       "Bash(mv SPEC.md.tmp SPEC.md)",
-      "Bash(npx suitecloud *)"
+      "Bash(npx suitecloud *)",
+      "Bash(suitecloud account:setup:ci --select GrupoFF_Prod)"
     ]
   },
   "hooks": {

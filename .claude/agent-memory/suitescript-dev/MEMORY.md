@@ -5,3 +5,4 @@
 - [Gafisa PYA — Etapa 16 neutral-tax-prop](project_gafisa_pya_neutral_tax_prop_etapa16.md) — sub-cálculo de custo removido, JE agora em partida dobrada; contas 634/3511/631 reusadas com a Etapa 17 (intencional).
 - [Gafisa PYA — fix foco última etapa](project_gafisa_pya_last_step_focus_fix.md) — activeStep() e buildSidebarSections() não dependem mais só de status 'active'; cobre caso "todas as etapas done".
 - [Pipefy — sem lib compartilhada](project_pipefy_accountclassvalidation_no_shared_lib.md) — pd-c-netsuite-tools declarado no .gitmodules mas nunca instanciado; scripts usam N/record, N/search, N/currentRecord nativos, sem record_util/search_util.
+- [Deploy — Git Bash mangula paths do suitecloud](feedback_gitbash_suitecloud_path_conversion.md) — prefixar `MSYS_NO_PATHCONV=1` (ou usar PowerShell) em `file:upload --paths "/SuiteScripts/..."` via Bash tool.

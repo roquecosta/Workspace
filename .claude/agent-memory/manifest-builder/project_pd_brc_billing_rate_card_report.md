@@ -66,3 +66,42 @@ ainda" misturaria dois conceitos diferentes no mesmo manifest.
 
 **How to apply:** repetir o marcador `†` em outros projetos novos onde o Script ID já está
 definido pelo TECH-SPEC/usuário mas o script ainda não foi deployado no ambiente.
+
+## Correção de modelo de dados (2026-08-19): header vs. sublist `ratecardpricingmulti`
+
+O TECH-SPEC foi corrigido: Classe de Faturamento, Moeda e Preço do Billing Rate Card **não são
+campos de header** — vivem na sublist `ratecardpricingmulti` (uma linha por Classe de Faturamento,
+um campo `price_N_` por moeda ativa, onde `N` = `currency.id`). O header só contribui com `name`,
+`createddate`, `createdby`. Ao refletir isso no MANIFEST:
+
+- Dividi "Campos nativos referenciados" em duas subseções por nível de dado:
+  `#### Billing Rate Card — Header` e `#### Billing Rate Card — Linha da sublist
+  ratecardpricingmulti`. Cada `price_N_` (1 a 9, hoje) virou uma linha própria na tabela — não
+  agrupei num único "price" genérico, porque cada sufixo é um internal ID real e distinto.
+- Adicionei uma terceira subseção, `#### Currency — Referenciado via join (currency.id = N)`,
+  para o registro nativo Currency (não customizado, não criado pelo projeto, apenas usado em
+  join). Incluí uma tabela de instâncias reais (id → nome/código) confirmada pelo usuário via
+  SuiteQL na conta — tratei isso como dado de catálogo (quais valores de moeda existem nesta
+  conta), não como comportamento, seguindo o precedente da skill de "documentar valores de listas
+  inline quando o spec os menciona".
+- Removi as linhas antigas "Moeda | *a confirmar*" e "Preço | price" do header — elas nunca
+  existiram como campos de header, era erro de modelagem anterior. Como havia evidência explícita
+  da correção no TECH-SPEC (não uma remoção sem lastro), a remoção foi direta, sem manter rastro
+  de "removido".
+- Pendências: P1 foi marcada como **resolvida** (nota acima da tabela, mesmo padrão que o
+  TECH-SPEC usou), não apagada da seção — mantém histórico de que existiu e foi fechada. P2
+  (createdby → nome do usuário) permanece aberta. Nova P4 (sintaxe SuiteQL exata para acessar a
+  sublist `ratecardpricingmulti`) foi adicionada, copiando o texto do TECH-SPEC quase literalmente
+  (é uma pendência de implementação, não de modelagem — mas ainda assim cataloga um objeto em
+  aberto, por isso pertence ao MANIFEST tanto quanto ao TECH-SPEC).
+
+**Why:** o usuário corrigiu um erro real de modelagem (assumiu campos de header que na verdade
+eram de uma matriz de preço multi-moeda, padrão "Multiple Prices" do NetSuite). O manifest não
+deve carregar a lógica de resolução do join (isso é comportamento, fica só no TECH-SPEC) mas deve
+catalogar com precisão cada `price_N_` como um internal ID de campo real, distinto — é isso que
+"cataloga objetos" significa quando o objeto é uma matriz de campos por moeda.
+
+**How to apply:** se outro projeto ProjectDome referenciar um record nativo com sublist de matriz
+de preço multi-moeda (`*multi` fields tipo `price_N_`), repetir o padrão: uma subseção separada
+para a sublist, uma linha por `price_N_`, e uma subseção própria para o record Currency
+referenciado via join — nunca colapsar os `price_N_` numa única linha genérica "Preço".

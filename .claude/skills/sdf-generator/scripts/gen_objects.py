@@ -54,7 +54,7 @@ DEFAULT_SELECT_BY_ID = {}
 TYPE_MAP = {
     "List/Record": "SELECT", "List": "SELECT",
     "Currency": "CURRENCY", "Percent": "PERCENT",
-    "Long Text": "CLOBTEXT", "Free-Form Text": "TEXT",
+    "Long Text": "CLOBTEXT", "Free-Form Text": "TEXT", "Text": "TEXT",
     "Text Area": "TEXTAREA", "Checkbox": "CHECKBOX",
     "Date": "DATE", "Integer": "INTEGER",
 }
@@ -185,7 +185,7 @@ def parse_table(block):
         cells = [c.strip() for c in line.strip("|").split("|")]
         if len(cells) < 4:
             continue
-        campo, internal_id, tipo = cells[0], cells[1], cells[2]
+        campo, internal_id, tipo = cells[0], cells[1].strip("`").strip(), cells[2]
         desc = "|".join(cells[3:]).strip()
         if campo.lower() == "campo" or internal_id.lower() in ("internal id", ""):
             continue

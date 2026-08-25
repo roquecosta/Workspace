@@ -105,3 +105,23 @@ catalogar com precisão cada `price_N_` como um internal ID de campo real, disti
 de preço multi-moeda (`*multi` fields tipo `price_N_`), repetir o padrão: uma subseção separada
 para a sublist, uma linha por `price_N_`, e uma subseção própria para o record Currency
 referenciado via join — nunca colapsar os `price_N_` numa única linha genérica "Preço".
+
+## Segunda lib compartilhada adicionada (2026-08-25): `pd-cntst-export.util.js`
+
+TECH-SPEC recebeu um botão "Download Excel" na tela (Suitelet `customscript_pd_brc_report_st`),
+reaproveitando a lib já existente `pd-cntst-export.util.js` (linhagem `pd_c_netsuite_tools/pd_cnt_static`,
+função `generateExcelDownload()`), mesmo padrão já usado em outros relatórios do cliente
+(pd_aging_report, pd_ar_accounts_receivable, pd_receivement_report, pd_c_customer_expense_report).
+Adicionei como segunda linha na tabela já existente da seção "Bibliotecas Compartilhadas (Referência
+Externa)" (mesmo formato de [[project_pd_brc_billing_rate_card_report]] acima) e ajustei a nota em
+blockquote de singular para plural ("Lib compartilhada" → "Libs compartilhadas"), já que agora há
+duas. Atualizei também o cabeçalho do manifest (`Gerado em` → 25/08/2026, `Versão do Spec` → 1.2).
+
+**Why:** a seção "Bibliotecas Compartilhadas" foi desenhada para crescer por linha conforme o
+projeto passa a depender de mais libs do `pd_c_netsuite_tools` — não é uma seção de tamanho fixo.
+Ajustar a nota de singular/plural evita a inconsistência de dizer "lib" (singular) com duas linhas
+na tabela.
+
+**How to apply:** ao adicionar uma terceira lib (ou mais) nesta seção, repetir o padrão de linha e
+verificar se a nota em blockquote ainda faz sentido no plural (já ajustada agora, não precisa mudar
+de novo só por isso).

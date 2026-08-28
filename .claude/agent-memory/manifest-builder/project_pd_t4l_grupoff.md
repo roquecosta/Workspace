@@ -45,6 +45,55 @@ referenciado por múltiplos scripts e o usuário pedir explicitamente o cadastro
 UseCases/Models internos comuns (1:1 com um script) para esta seção — isso seria implementação, não
 objeto compartilhado.
 
+**Cabeçalho "Versão do Spec" pode ficar desatualizado em relação ao conteúdo real do MANIFEST — 2026-08-28.**
+Ao atualizar para a v2.10, encontrei o cabeçalho ainda em "2.6", mas o corpo do arquivo já refletia
+objetos da v2.8 (CNAB, `pd-t4l-cnab.js`†) — ou seja, uma atualização anterior esqueceu de bumpar o
+cabeçalho. As v2.7 e v2.9 do SPEC não exigiam mudança de objetos (puro comportamento: retorno à API e
+V3 do idIntegracao/externalid nativo), então não há lacuna de conteúdo, só de cabeçalho. Corrigi o
+cabeçalho para 2.10/28-08-2026 nesta sessão.
+**Why:** o cabeçalho é fácil de esquecer quando a atualização é feita rápido; sem ele, fica impossível
+saber se o manifest está de fato sincronizado com o SPEC só de bater a versão.
+**How to apply:** ao atualizar este MANIFEST, sempre conferir se o conteúdo (não só o número) já
+incorpora versões intermediárias do changelog antes de assumir que o cabeçalho está correto.
+
+**Verificar objetos "de origem incerta" no XML real antes de aceitar a instrução do orquestrador ao
+pé da letra — 2026-08-28.** Ao cadastrar 9 campos de entidade da v2.10 (cópia Vendor→Customer), a
+instrução recebida dizia que a origem de todos os 9 era incerta. Busquei `Objects/pd_t4l/Fields/` e
+encontrei XML real para 8 deles (`custentity_pd_t4l_billing_monday/tuesday/wednesday/thursday/
+friday/saturday/sunday` e `custentity_pd_t4l_terms`, todos com `appliestocustomer=T` e
+`appliestovendor=T`) — ou seja, são objetos reais e já gerenciados via SDF por este projeto, só nunca
+tinham sido cadastrados no MANIFEST. Só `custentity_pd_petr_country_ls` de fato não tem XML neste
+projeto (prefixo `pd_petr`, não `pd_t4l` — provavelmente de outro módulo/bundle); é o único que
+cataloguei com a nota de origem pendente de confirmação.
+**Why:** a instrução do orquestrador é uma hipótese de quem não tem acesso direto ao filesystem no
+momento de escrever a instrução; "IDs reais têm prioridade" e "não inventar" exigem checar o
+Objects/ antes de aceitar a hipótese.
+**How to apply:** antes de marcar qualquer campo como "origem não confirmada", grep no `Objects/
+pd_t4l/Fields` (ou pasta equivalente do projeto) pelo scriptid; só manter a nota de incerteza para os
+que genuinamente não aparecem lá.
+
+**Dois marcadores no mesmo objeto (`*†` combinados) quando ambos se aplicam — 2026-08-28.** Ao
+cadastrar `customscript_pd_t4l_vendor_handler` e `customscript_pd_t4l_mirror_vnd_cust_mr` (v2.10),
+usei `*` (Script ID inferido por convenção, já que o SPEC só cita o nome do arquivo) **e** `†`
+(arquivo ainda não existe no código) juntos no mesmo Script ID — diferente do precedente do
+`pd-t4l-cnab.js`, que só usa `†` porque não é, em si, um Script ID (é um módulo sem script próprio).
+**Why:** são fatos ortogonais — um é sobre a string do ID (inferida vs. confirmada), o outro é sobre a
+existência do objeto no código/ambiente. Só usar `†` sozinho quando o objeto cadastrado não tem
+conceito de "Script ID inferido" (ex.: um módulo/service).
+**How to apply:** ao cadastrar um Script ID novo cujo arquivo ainda não existe E cujo ID foi inferido
+por convenção (não veio literal do SPEC/código), marcar com `*†` e footnote para os dois símbolos.
+
+**Lacunas pré-existentes fora do escopo da tarefa, sinalizadas mas não corrigidas — 2026-08-28.**
+Notei duas inconsistências não relacionadas ao meu escopo da v2.10, que não corrigi (sem pedido
+explícito): (1) `custentity_brl_entity_t_fed_tax_reg` (campo de CNPJ usado desde a v1.0 em
+`createCiot`/`payCiot`) nunca foi cadastrado neste MANIFEST; (2) as duas linhas de CNAB
+"Informações Bancárias da Subsidiária (CNAB)" e "Método de Pagamento (CNAB)" em `customer`/`vendor`
+usam o mesmo Internal ID `custentity_pd_mtodo_de_pagamento` para os dois campos (provável erro de
+digitação/cópia — dois campos com propósitos diferentes não deveriam compartilhar ID).
+**Why:** manifest-builder não deve expandir escopo além do que foi pedido sem confirmação do usuário.
+**How to apply:** reportar essas duas pendências ao orquestrador/usuário na próxima interação com este
+MANIFEST; não corrigir silenciosamente.
+
 **Campo de entidade usado em Customer E Vendor: duplicar linha em subseções `### customer` e
 `### vendor` separadas** (não uma tabela única "customer/vendor") — mesmo padrão já usado neste
 manifest para colunas de sublista repetidas em `invoice`/`vendorbill` (`custcol_pd_t4l_inst_ciot_linked`

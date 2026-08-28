@@ -17,3 +17,43 @@ MANIFEST em `GrupoFF/src/FileCabinet/SuiteScripts/ProjectDome/pd_t4l/Docs/MANIFE
 
 **Prefixo de campo por record:** cada custom record do projeto usa um prefixo específico nos internal IDs dos seus campos, exceto `customrecord_pd_t4l_log_entry` (usa `custrecord_pd_` genérico, sem `t4l`, provavelmente herdado de um padrão anterior). Records mais recentes seguem `custrecord_pd_t4l_<abrev_record>_<campo>` (ex.: `_ciot_`, `_inst_`, `_veh_`, `_nc_`, `_nd_`). Para o novo `customrecord_pd_t4l_log_saida` (v2.6) usei o prefixo `custrecord_pd_t4l_saida_`, seguindo o padrão mais recente (não o genérico do log_entry).
 **How to apply:** ao adicionar campos a records novos deste projeto, seguir o prefixo `custrecord_pd_t4l_<abrev>_`, não replicar o padrão genérico legado do log_entry.
+
+**Marcador `†` para objeto real ainda não implementado (distinto de `*` = ID inferido) — 2026-08-27.**
+Ao cadastrar em modo colaborativo/paralelo o service `pd-t4l-cnab.js` (ainda não existe no código,
+só projetado) e os campos externos que ele vai manipular, usei `†` — não `*` — porque o nome do
+arquivo/módulo é real e definido pelo usuário, só falta ser criado. `*` continua reservado para IDs
+inferidos a partir de convenção de nome. Mesmo marcador `†` já usado no projeto pd_brc (StoccheForbes)
+para Script IDs reais sem Internal ID por falta de deploy — reaproveitei o símbolo para o mesmo
+conceito geral ("objeto real, ainda não materializado"), mesmo em contexto diferente (arquivo de
+código vs. deploy de script).
+**Why:** evitar reutilizar `*` para dois significados diferentes no mesmo manifest.
+**How to apply:** se outro objeto real mas ainda-não-criado for cadastrado neste ou outro manifest
+ProjectDome, usar `†` com nota de rodapé própria, nunca `*`.
+
+**Nova seção "Módulos Internos Compartilhados" (não-literal-do-template da skill) — 2026-08-27.**
+Adicionada logo após "## Scripts" e antes de "## Custom Records", para catalogar `pd-t4l-cnab.js`
+(pasta `Services/`), um módulo interno deste projeto usado por múltiplos MRs mas que não é, em si,
+um Script NetSuite deployado (sem Script ID). Tabela: Arquivo | Caminho | Descrição | Usado por.
+Segue o mesmo precedente de [[project_pd_brc_billing_rate_card_report]] ("Bibliotecas Compartilhadas
+(Referência Externa)"), mas para um módulo *interno* ao projeto, não uma lib externa compartilhada
+entre clientes — por isso o nome da seção é diferente ("Módulos Internos", sem "Referência Externa").
+**Why:** o projeto nunca catalogou UseCases/Models/Services internos antes (não apareciam no
+MANIFEST); mas o usuário pediu explicitamente para registrar este service como objeto, e ele é
+referenciado por 4 scripts diferentes — omiti-lo criaria um objeto "invisível" no catálogo.
+**How to apply:** só criar entrada nesta seção quando um arquivo de Service/lib interna for
+referenciado por múltiplos scripts e o usuário pedir explicitamente o cadastro; não promover
+UseCases/Models internos comuns (1:1 com um script) para esta seção — isso seria implementação, não
+objeto compartilhado.
+
+**Campo de entidade usado em Customer E Vendor: duplicar linha em subseções `### customer` e
+`### vendor` separadas** (não uma tabela única "customer/vendor") — mesmo padrão já usado neste
+manifest para colunas de sublista repetidas em `invoice`/`vendorbill` (`custcol_pd_t4l_inst_ciot_linked`
+etc., duplicado nas duas subseções `#### ... — Colunas de Linha (item)`). Apliquei o mesmo aos campos
+CNAB `custentitypd_informaes_ban_da_subsidi` e `custentitypd_mtodo_de_pagamento` (Customer e Vendor) e
+aos campos `custbody_brl_tran_l_banking_info`/`custbody_brl_tran_l_payment_method` na sublista nativa
+`installment` (duplicados em `#### invoice — Colunas de Linha (installment)` e
+`#### vendorbill — Colunas de Linha (installment)`, novas subseções criadas em 2026-08-27).
+**Why:** manter "uma linha por objeto por record nativo" (regra geral da skill) em vez de inventar
+uma notação combinada tipo "customer/vendor" que não existe no template.
+**How to apply:** ao cadastrar um campo nativo/externo usado em mais de um record nativo deste
+projeto, sempre duplicar a linha em subseções `###`/`####` separadas — nunca combinar.

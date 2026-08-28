@@ -64,3 +64,38 @@ resolvida pelo solution-architect.
   `custentity_pd_petr_country_ls` não têm XML em nenhuma pasta do workspace — tratados como campos de
   bundle instalado, sem gestão SDF por nenhum projeto ProjectDome conhecido. Documentei essa distinção
   no corpo do MANIFEST em vez de tratar os 10 campos como um bloco homogêneo.
+
+## 2026-08-28 — Script de manutenção `customscript_pd_mvd_set_customer_country` (sem lastro no TECH-SPEC)
+
+O usuário pediu para cadastrar um MapReduce novo (`customscript_pd_mvd_set_customer_country`,
+`pd-mvd-set-customer-country.mr.js`) que seta `custentity_pd_petr_country_ls` = 30 em Customers ativos
+criados no dia da execução — explicitamente **independente** da regra de espelhamento Vendor→Customer
+já documentada no TECH-SPEC, e pedindo para **não tocar** o TECH-SPEC.
+
+Padrão idêntico ao já registrado em `[[project_pd_inp_plugnotas]]` para
+`customscript_pd_inp_clear_taxregime_mr`: script de manutenção pontual hospedado na pasta do projeto,
+sem respaldo em nenhuma versão do TECH-SPEC.
+
+**Decisões desta atualização:**
+- Não bumpei `Versão do Spec` (continua 1.0) nem mudei `Gerado em` (já era 28/08/2026, mesma data) —
+  cabeçalho só muda quando o TECH-SPEC muda de versão.
+- Como os dois scripts existentes usam o marcador `†` com um significado específico ("ID definido pelo
+  solution-architect no TECH-SPEC, ainda não implementado"), e este script novo não vem do TECH-SPEC,
+  criei um marcador novo `‡` só para esta linha, com footnote própria explicando a proveniência (ID
+  dado diretamente pelo usuário) e o desvio de Record Alvo. Evitei forçar o `†` existente porque o
+  texto da footnote dele seria factualmente incorreto para este objeto.
+- Repeti o desvio "Record Alvo preenchido em MapReduce" (a skill reserva essa coluna a UE/CS) a pedido
+  explícito do usuário, com nota transparente — mesmo precedente do `pd_inp`.
+- Parâmetro novo `custscript_pd_mvd_country_dry_run` cadastrado seguindo a mesma frase-padrão do
+  `custscript_pd_mvd_dry_run` já existente (troca "Vendor" por "Customer" e o objeto da validação).
+
+**Why:** nem todo script na pasta de um projeto nasce de uma regra do TECH-SPEC atual; quando o
+usuário pede um script de manutenção pontual e explicitamente pede para não tocar o TECH-SPEC, o
+manifest-builder cadastra mesmo assim (papel é catalogar objetos, não validar origem funcional), mas
+precisa deixar rastreável que aquele objeto é uma exceção — daí o marcador dedicado em vez de
+reaproveitar um símbolo com significado diferente.
+
+**How to apply:** se aparecer um terceiro script de manutenção neste projeto sem lastro no TECH-SPEC,
+decidir entre reusar `‡` (se a proveniência for a mesma: ID dado pelo usuário, fora do TECH-SPEC) ou
+criar um símbolo novo se a razão for diferente. Não usar `†` para objetos que não vieram do
+solution-architect/TECH-SPEC.

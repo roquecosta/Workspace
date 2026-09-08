@@ -106,3 +106,35 @@ aos campos `custbody_brl_tran_l_banking_info`/`custbody_brl_tran_l_payment_metho
 uma notação combinada tipo "customer/vendor" que não existe no template.
 **How to apply:** ao cadastrar um campo nativo/externo usado em mais de um record nativo deste
 projeto, sempre duplicar a linha em subseções `###`/`####` separadas — nunca combinar.
+
+**Subtabela "Funções Expostas" dentro de "Módulos Internos Compartilhados" quando o módulo tem
+múltiplas funções com "usado por" distintos — 2026-09-08.** Ao formalizar `pd-t4l-tech4log.api.js`
+(pasta real `pd_t4l/Api/`, confirmada via grep — não `Services/` como o `pd-t4l-cnab.js`) com 4
+funções expostas (`sendEmissionReturn`, `sendPaymentReturn`, `sendSettlement`, `resendRequest`), cada
+uma chamada por um conjunto diferente de scripts, a tabela padrão de uma linha por arquivo não
+comportava o mapeamento. Criei uma subtabela `#### Funções Expostas — <arquivo>` logo abaixo da linha
+do módulo na tabela principal (que passa a ter "Usado por" = "Ver tabela de funções expostas abaixo"),
+com colunas Função | Usado por — uma linha por função, mantendo a regra "uma linha por objeto" no
+nível de função em vez de arquivo. Atualizei também o parágrafo intro da seção (antes dizia "pasta
+`Services/`", agora "pastas `Services/`, `Api/`") para não ficar desatualizado.
+**Why:** evitar espremer 4 mapeamentos função→scripts em uma única célula de tabela (ilegível) sem
+inventar uma coluna nova fora do padrão da skill.
+**How to apply:** se outro módulo interno compartilhado deste projeto tiver múltiplas funções com
+usuários diferentes, replicar essa subtabela; se tiver função única ou "usado por" idêntico entre
+funções, manter só a linha simples na tabela principal (como `pd-t4l-cnab.js`).
+
+**Marcador `*†` combinado reaplicado a Script ID de Suitelet/RESTlet de tela nova em fase de Design —
+2026-09-08.** Ao cadastrar `pd-t4l-resend-log-saida.st.js` e `pd-t4l-resend-log-saida-handler.rl.js`
+(nova tela de reenvio manual de Log de Saída, v3.1), usei `*†` combinado (não só `*`) mesmo a
+instrução do orquestrador (solution-architect) tendo pedido explicitamente apenas "o marcador para
+Script ID inferido por convenção" — apliquei o precedente já registrado neste arquivo (dual marcador
+quando ID é inferido E arquivo não existe ainda no código) por ser mais preciso, já que o projeto está
+em fase de Design e nenhum dos dois arquivos foi escrito ainda.
+**Why:** a instrução do orquestrador focou só na motivação de um dos dois fatos (ID não confirmado
+porque é fase de Design), mas o outro fato (arquivo inexistente) também é verdadeiro e já tem
+convenção própria (`†`) neste projeto; usar só `*` omitiria essa segunda informação do leitor do
+manifest.
+**How to apply:** ao receber instrução do solution-architect pedindo apenas o marcador de ID inferido,
+verificar se o fato "arquivo ainda não implementado" também se aplica (comum em fase de Design) e, se
+sim, combinar `*†` mesmo assim — reportar a decisão no resumo devolvido ao chamador para não surpreender
+quem pediu só um marcador.

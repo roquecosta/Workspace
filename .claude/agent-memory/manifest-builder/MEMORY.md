@@ -6,3 +6,4 @@
 - [Projeto StoccheForbes/pd_brc Billing Rate Card Report](project_pd_brc_billing_rate_card_report.md) — seção nova p/ lib compartilhada externa, record nativo c/ field IDs pendentes, marcador † p/ script não deployado
 - [Projeto GrupoFF/pd_t4l Tech4Log](project_pd_t4l_grupoff.md) — scriptid real de MR tem sufixo _mr (diverge do texto do manifest), customlists documentadas inline sem seção própria, prefixo custrecord_pd_t4l_<abrev>_ por record
 - [Projeto GrupoFF/pd_mvd_mirror_vendor](project_pd_mvd_mirror_vendor.md) — duplica feature de pd_t4l; script de manutenção sem lastro no TECH-SPEC usa marcador ‡ dedicado (não reusar †)
+- [Projeto GrupoFF/pd_fcf_fill_cnab_fields](project_pd_fcf_fill_cnab_fields.md) — MANIFEST de SPEC reverso; pd-t4l-cnab.js† nunca implementado, feature real nasceu aqui; 3 divergências pd_t4l sinalizadas

@@ -32,8 +32,9 @@ Dois artefatos governam cada projeto:
 
 Aguarde a resposta e carregue apenas os recursos da etapa correspondente.
 
-> As rotas sob demanda (brainstorm, revisão de consistência, geração de objetos XML) **não** aparecem
-> no menu inicial. São acionadas apenas por solicitação explícita do usuário.
+> As rotas sob demanda (brainstorm, revisão de consistência, geração de objetos XML, documentação
+> de regras de negócio para o cliente) **não** aparecem no menu inicial. São acionadas apenas por
+> solicitação explícita do usuário.
 
 ---
 
@@ -51,12 +52,14 @@ ENTRADA B: TECH-SPEC já escrito ─────────────┐
                    ┌─────────────────────────┴──────────────────────────┐
                    ▼                                                      ▼
  suitescript-dev: skills + TECH-SPEC + MANIFEST ─► código   sdf-generator: projeta MANIFEST ─► objetos XML
+ client-doc-generator: projeta TECH-SPEC ─► .docx timbrado (entregável do cliente, sob demanda)
                    └─────────────────────────┬──────────────────────────┘
                                              ▼
                        suitescript-dev faz o deploy dos arquivos modificados (opcional, sob demanda)
                                              ▼
 ATUALIZAÇÃO: TECH-SPEC atualizado ─► discute ─► manifest-builder reflete ─► suitescript-dev reflete no código
              (opcional: sdf-generator regenera os objetos XML do diff ─► deploy)
+             (opcional: client-doc-generator regenera as seções afetadas do doc do cliente)
 ```
 
 > Nunca pule para a implementação sem o MANIFEST atualizado. O MANIFEST sempre precede o código.
@@ -162,6 +165,26 @@ implementação).
 Carregue:
 - `@.claude/skills/sdf-generator/SKILL.md`
 
+### Documentação de regras de negócio para o cliente (client-doc-generator)
+
+Gatilho: o usuário pede para gerar o documento do cliente ("gera o doc do cliente", "documentação de
+regras de negócio", "documento timbrado", "materializa o tech-spec pro cliente"). Projeta o TECH-SPEC
+num entregável `.docx` no papel timbrado da Dome (`DomeTimbrado.docx`), reescrito em linguagem de
+negócio legível por quem não é técnico. Acionada em dois modos:
+
+- **A partir do TECH-SPEC** (preferido) — projeção interpretativa do comportamento.
+- **A partir de requisitos crus** (fallback) — sem TECH-SPEC; gera com aviso de que o entregável não
+  tem fonte canônica e recomenda capturar via `solution-architect`.
+
+Projeção **read-only** e **interpretativa** do TECH-SPEC: reescreve regra técnica em linguagem de
+negócio, mas **nunca** edita o TECH-SPEC nem o MANIFEST, e omite todo detalhe interno (internal IDs,
+nomes de script, tipos de entrypoint, deploy). Ao contrário do `sdf-generator`, interpreta
+comportamento — essa é sua função. Pré-condição: TECH-SPEC atualizado. Orquestra a skill `docx` para
+preservar o timbrado.
+
+Carregue:
+- `@.claude/skills/client-doc-generator/SKILL.md`
+
 
 ## Contexto do workspace
 
@@ -181,6 +204,10 @@ Carregue:
 - O **TECH-SPEC** referencia o MANIFEST; nunca redefine campos.
 - A **geração de objetos XML** (`sdf-generator`) é projeção read-only do MANIFEST: lê o catálogo e
   materializa os XML, nunca edita o MANIFEST nem o TECH-SPEC. Direção da dependência: `sdf-generator → MANIFEST`.
+- A **documentação de regras de negócio para o cliente** (`client-doc-generator`) é projeção read-only
+  do TECH-SPEC: reescreve comportamento em linguagem de negócio e materializa o `.docx` timbrado,
+  **nunca** edita o TECH-SPEC nem o MANIFEST. Direção da dependência: `client-doc-generator → TECH-SPEC`.
+  Omite todo detalhe de implementação/implantação do documento entregue ao cliente.
 - Nunca implemente **recurso novo ou mudança de comportamento** sem MANIFEST atualizado. (Mudanças
   livres — refatoração, logs, performance, estilo — são exceção: não dependem do MANIFEST, mas também
   não criam objetos novos.)

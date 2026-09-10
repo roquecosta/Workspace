@@ -19,7 +19,8 @@
       "Bash(xxd src/deploy.xml)",
       "Bash(python3 -c ' *)",
       "Bash(awk 'NR<30{print;next} {gsub\\(/\\\\<FALHA\\\\>/,\"CONCLUIDO_COM_ERROS\"\\); print}' SPEC.md)",
-      "Bash(mv SPEC.md.tmp SPEC.md)"
+      "Bash(mv SPEC.md.tmp SPEC.md)",
+      "Bash('/c/Program Files/LibreOffice/program/soffice.exe' --headless --convert-to pdf --outdir 'C:\\\\Users\\\\Roque\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Roque-Documents-ProjectDome\\\\0e082f86-63d9-4f4d-9f58-2d8f595d2c9d\\\\scratchpad' 'C:\\\\Users\\\\Roque\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Roque-Documents-ProjectDome\\\\0e082f86-63d9-4f4d-9f58-2d8f595d2c9d\\\\scratchpad\\\\doc-cliente-inp.docx')"
     ]
   },
   "hooks": {

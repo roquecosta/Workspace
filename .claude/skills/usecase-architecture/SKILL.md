@@ -1,7 +1,7 @@
 ---
 name: usecase-architecture
 description: >
-  Architectural reference for creating new NetSuite scripts following the EntryPoint / UseCase / Model pattern used at ProjectDome.
+  Architectural reference for creating new NetSuite scripts following the EntryPoint / UseCase / Model pattern used at Dome.
   Use this skill ALWAYS when creating, scaffolding, or modifying NetSuite scripts, including UserEvent (UE), MapReduce (MR),
   Client Script (CS), or Suitelet (SL) types. Also trigger when the user mentions terms like "new script", "new NetSuite project",
   "SuiteScript", "EntryPoint", "UseCase", "Model", "custom record", "pd_c_netsuite_tools", "record_util", "search_util",
@@ -11,7 +11,7 @@ description: >
   This skill defines the mandatory folder structure, the responsibilities of each layer, and the code templates to follow.
 ---
 
-# Arquitetura UseCase — NetSuite (ProjectDome)
+# Arquitetura UseCase — NetSuite (Dome)
 
 ## Quando aplicar este padrão
 

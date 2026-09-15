@@ -62,7 +62,7 @@ resolvida pelo solution-architect.
   `GrupoFF/src/Objects/pd_t4l/Fields/`: os 8 campos `pd_t4l_billing_*`/`pd_t4l_terms` têm XML
   confirmado ali (reais, geridos via SDF pelo `pd_t4l`); `custentity_brl_entity_t_fed_tax_reg` e
   `custentity_pd_petr_country_ls` não têm XML em nenhuma pasta do workspace — tratados como campos de
-  bundle instalado, sem gestão SDF por nenhum projeto ProjectDome conhecido. Documentei essa distinção
+  bundle instalado, sem gestão SDF por nenhum projeto Dome conhecido. Documentei essa distinção
   no corpo do MANIFEST em vez de tratar os 10 campos como um bloco homogêneo.
 
 ## 2026-08-28 — Script de manutenção `customscript_pd_mvd_set_customer_country` (sem lastro no TECH-SPEC)

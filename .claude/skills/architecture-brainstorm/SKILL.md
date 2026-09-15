@@ -32,7 +32,7 @@ cargo do usuário.
 ## O que está no escopo
 
 Decisões **estruturais e locais do projeto** — aquelas que não são requisito do
-cliente nem arquitetura fixa da ProjectDome:
+cliente nem arquitetura fixa da Dome:
 
 - Organização e segmentação de pastas
 - Agrupamento de usecases similares

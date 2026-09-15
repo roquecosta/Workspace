@@ -23,7 +23,7 @@ não inventa o que deployar; recebe o conjunto de arquivos/objetos e executa o p
 ## ⚠️ Segurança de conta — leia antes de qualquer comando
 
 Deploy é **ação com efeito colateral em ambiente real e possivelmente irreversível**. O workspace
-ProjectDome tem contas de **produção e de sandbox** configuradas (ex.: STOCCHE production / sandbox).
+Dome tem contas de **produção e de sandbox** configuradas (ex.: STOCCHE production / sandbox).
 Cada conta-role é um **`authid`** (alias) no SuiteCloud CLI.
 
 Regras invioláveis deste runbook:
@@ -56,7 +56,7 @@ suitecloud account:manageauth --list
 
 ## Disambiguação importante: `manifest.xml` ≠ `MANIFEST.md`
 
-- **`MANIFEST.md`** — artefato do ProjectDome: catálogo dos objetos NetSuite (registros, campos, scripts).
+- **`MANIFEST.md`** — artefato da Dome: catálogo dos objetos NetSuite (registros, campos, scripts).
   Fonte canônica do projeto. **Esta skill nunca o edita.**
 - **`manifest.xml`** — arquivo de configuração do **projeto SDF** (metadados e dependências), na raiz de
   `src/`. É insumo técnico do deploy, gerado/mantido pelo fluxo SDF.

@@ -28,7 +28,7 @@ conceito geral ("objeto real, ainda não materializado"), mesmo em contexto dife
 código vs. deploy de script).
 **Why:** evitar reutilizar `*` para dois significados diferentes no mesmo manifest.
 **How to apply:** se outro objeto real mas ainda-não-criado for cadastrado neste ou outro manifest
-ProjectDome, usar `†` com nota de rodapé própria, nunca `*`.
+Dome, usar `†` com nota de rodapé própria, nunca `*`.
 
 **Nova seção "Módulos Internos Compartilhados" (não-literal-do-template da skill) — 2026-08-27.**
 Adicionada logo após "## Scripts" e antes de "## Custom Records", para catalogar `pd-t4l-cnab.js`

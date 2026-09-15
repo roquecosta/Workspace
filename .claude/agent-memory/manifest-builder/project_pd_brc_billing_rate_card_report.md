@@ -101,7 +101,7 @@ deve carregar a lógica de resolução do join (isso é comportamento, fica só 
 catalogar com precisão cada `price_N_` como um internal ID de campo real, distinto — é isso que
 "cataloga objetos" significa quando o objeto é uma matriz de campos por moeda.
 
-**How to apply:** se outro projeto ProjectDome referenciar um record nativo com sublist de matriz
+**How to apply:** se outro projeto Dome referenciar um record nativo com sublist de matriz
 de preço multi-moeda (`*multi` fields tipo `price_N_`), repetir o padrão: uma subseção separada
 para a sublist, uma linha por `price_N_`, e uma subseção própria para o record Currency
 referenciado via join — nunca colapsar os `price_N_` numa única linha genérica "Preço".

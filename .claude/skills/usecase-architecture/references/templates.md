@@ -6,7 +6,7 @@
 /**
  * @NApiVersion 2.1
  * @NScriptType UserEventScript
- * @author <Nome> - ProjectDome
+ * @author <Nome> - Dome
  */
 define([
     'N/log',
@@ -79,7 +79,7 @@ define([
 /**
  * @NApiVersion 2.1
  * @NModuleScope public
- * @author <Nome> - ProjectDome
+ * @author <Nome> - Dome
  * @description Model for <NomeRecord> record
  */
 define([

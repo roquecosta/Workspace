@@ -6,7 +6,7 @@ metadata:
 ---
 
 O cliente **Pipefy** (`Pipefy/src/FileCabinet/SuiteScripts/ProjectDome/`) tem `.gitmodules`
-declarando o submódulo `pd-c-netsuite-tools` (biblioteca compartilhada ProjectDome — record_util,
+declarando o submódulo `pd-c-netsuite-tools` (biblioteca compartilhada Dome — record_util,
 search_util etc.), mas o submódulo **nunca foi de fato adicionado** ao repositório (sem gitlink na
 tree do git, `git submodule update --init` não traz nada). Ou seja: hoje não existe
 `pd_cnt_standard/pd-cnts-record.util.js` nem `pd-cnts-search.util.js` disponível no projeto Pipefy,

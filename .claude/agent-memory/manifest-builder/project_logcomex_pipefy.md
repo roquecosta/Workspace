@@ -39,5 +39,5 @@ N/cache (escopo PUBLIC, TTL 24h), documentado só no TECH-SPEC como comportament
 **Como aplicar:** ao atualizar este manifest no futuro, manter a tabela "Parâmetros de Script"
 (seção que substituiu "Secrets" neste projeto, já que não há mais nenhum `custsecret_` cadastrado)
 com uma linha por parâmetro. Lembrar que o registro `customrecord_pd_integration_log` é
-genérico/compartilhado entre projetos de integração da ProjectDome e não é catalogado neste
+genérico/compartilhado entre projetos de integração da Dome e não é catalogado neste
 manifest (nota já presente no rodapé do arquivo).

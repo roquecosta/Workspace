@@ -75,6 +75,11 @@ Client Script de registro, etc. Seguem o padrão **UseCase / Model / EntryPoint*
 **Sinais:** processamento em lote, regras de cálculo, integrações, gravação de registros, governance/usage,
 ausência de UI própria.
 
+**Nomenclatura dos EntryPoints:** todo arquivo de EntryPoint usa `PREFIXODOPROJETO_NomeDoArquivo.SUFIXO.js`
+— prefixo do projeto (do MANIFEST) + sufixo do tipo em maiúsculo (`UE`, `MR`, `SCH`, `CS`, `RL`, `MU`).
+Ex.: `T4L_LogEntry.MR.js`. Nunca crie EntryPoint sem os dois. Detalhe completo na skill
+`usecase-architecture`.
+
 ### Domínio Tela (frontend via NsSuitelet)
 
 É **Tela** quando estivermos trabalhando em scripts do tipo **Suitelet que usam o framework NsSuitelet**

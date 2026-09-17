@@ -50,6 +50,14 @@ O manifest cataloga **objetos / implantação**, **nunca comportamento**. Não i
 
 ---
 
+## Nomenclatura de arquivos de script
+
+Ao registrar/inferir a coluna **Arquivo** de um script (EntryPoint), use sempre o padrão
+`PREFIXODOPROJETO_NomeDoArquivo.SUFIXO.js` da skill `usecase-architecture` — prefixo do projeto (o
+mesmo definido acima) + PascalCase + sufixo do tipo em maiúsculo (`UE`, `MR`, `SCH`, `CS`, `RL`, `ST`,
+`MU`). Nunca infira nome em kebab-case/minúsculo (ex.: `dm-pis-dashboard.suitelet.js`) — esse padrão é
+legado e não deve ser usado em projetos novos.
+
 ## Conformidade com a skill manifest-standards
 
 Você segue a skill **`manifest-standards` à risca**. Em particular:

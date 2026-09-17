@@ -29,7 +29,7 @@ Use sempre que o script envolver:
 ```
 <projeto>/
 ├── EntryPoints/
-│   └── <Descricao>.<tipo>.js       ← apenas orquestração, sem regra de negócio
+│   └── PREFIXO_<Descricao>.<SUFIXO>.js   ← apenas orquestração, sem regra de negócio
 ├── UseCases/
 │   └── <NomeAção>.js               ← regras de negócio, exporta execute()
 ├── Models/
@@ -39,6 +39,40 @@ Use sempre que o script envolver:
 └── Constants/
     └── <dominio>.constants.js      ← valores fixos compartilhados entre camadas
 ```
+
+---
+
+## Nomenclatura dos EntryPoints
+
+Todo arquivo de **EntryPoint** — em qualquer domínio, backend ou Tela — usa o padrão:
+
+```
+PREFIXODOPROJETO_NomeDoArquivo.SUFIXO.js
+```
+
+- **PREFIXODOPROJETO** — prefixo do projeto, definido no MANIFEST (ex.: `PIS`, `T4L`, `DM`).
+- **NomeDoArquivo** — PascalCase, descreve a responsabilidade do entrypoint (ex.: `Dashboard`,
+  `LogEntry`, `CreateCiot`).
+- **SUFIXO** — tipo do script, em maiúsculo:
+
+  | Tipo de script    | Sufixo |
+  |-------------------|--------|
+  | User Event        | `UE`   |
+  | Map/Reduce        | `MR`   |
+  | Scheduled Script  | `SCH`  |
+  | Client Script     | `CS`   |
+  | Restlet           | `RL`   |
+  | Suitelet          | `ST`   |
+  | Mass Update       | `MU`   |
+
+Exemplo: `PIS_Dashboard.ST.js`, `T4L_LogEntry.MR.js`.
+
+> Todo EntryPoint precisa do prefixo do projeto **e** do sufixo do tipo — nunca um nome de arquivo
+> "solto" sem os dois. Esta é a mesma convenção usada na camada de Tela (ver `suitescript-dev.md`).
+
+UseCases, Models, Utils e Constants **não** levam prefixo do projeto nem sufixo de tipo — seguem os
+padrões `<NomeAção>.js`, `<NomeRecord>.model.js`, `<dominio>.util.js`, `<dominio>.constants.js` já
+descritos acima.
 
 ---
 

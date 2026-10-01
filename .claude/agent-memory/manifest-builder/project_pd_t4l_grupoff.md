@@ -138,3 +138,28 @@ manifest.
 verificar se o fato "arquivo ainda não implementado" também se aplica (comum em fase de Design) e, se
 sim, combinar `*†` mesmo assim — reportar a decisão no resumo devolvido ao chamador para não surpreender
 quem pediu só um marcador.
+
+**`custbody_pd_t4l_nature` é usado tanto em `invoice` quanto em `vendorbill`, mas só estava
+documentado na subseção `vendorbill` — 2026-10-01.** O MANIFEST só tinha a linha do campo em
+`### vendorbill` (grep confirmou `pd-t4l-create-debit-note.mr.js`/`pd-t4l-create-nfse-nd.mr.js`
+setando/filtrando ND=2 ali). Mas `pd-t4l-create-revenue-ciot.mr.js` seta 1 (CIOT) e
+`pd-t4l-create-credit-note.mr.js` seta 3 (NC) na Invoice, e `pd-t4l-payment-handler.ue.js`,
+`pd-t4l-discount-handler.ue.js` e `pd-t4l-reversal-discount-handler.ue.js` leem o valor 3 na Invoice
+via `lookupFields`/reload — faltava a linha em `### invoice`. Adicionei seguindo o mesmo padrão de
+duplicar linha em subseções separadas (não uma tabela combinada). Também confirmei que o valor
+4 = Mensalista (informado pelo usuário, já cadastrado na customlist `customlist_pd_t4l_nature` no
+ambiente, mas sem nenhum script do projeto que o setе/leia ainda) foi adicionado à enumeração da
+descrição em ambas as linhas (invoice e vendorbill), mesmo sem uso em código — o MANIFEST cataloga a
+definição do campo/lista, não só os valores exercitados pelo código atual.
+**Why:** esse mesmo campo (`custbody_pd_t4l_nature`) é referenciado por vários outros projetos do
+GrupoFF (`pd_piv_pdf_invoice_vendorbill`, `pd_cse_control_send_email`, `pd_fcf_fill_cnab_fields`,
+`pd_inp_integration_netsuite_plugnotas`) como "campo pré-existente, não redefinido aqui" — o MANIFEST
+de `pd_t4l` (dono real do campo, XML em `src/Objects/pd_t4l/Fields/custbody_pd_t4l_nature.xml`)
+precisa estar completo e correto para servir de referência única, já que os outros manifests apontam
+para cá.
+**How to apply:** ao tocar `custbody_pd_t4l_nature` neste projeto novamente, lembrar que ele é
+referenciado por múltiplos outros manifests do GrupoFF como fonte — mudanças de escopo/valores aqui
+podem exigir aviso cruzado (fora do escopo de uma edição pontual, mas vale mencionar ao usuário).
+Notei também que `pd_piv_pdf_invoice_vendorbill/DOCS/MANIFEST.md` já lista a enumeração completa
+1/2/3 deste campo em duas linhas próprias (parece "redefinir" em vez de só referenciar) — não corrigi
+por estar fora do escopo pedido, mas é uma divergência a sinalizar se o projeto pd_piv for tocado.

@@ -30,9 +30,12 @@ Config JSON (todos os campos são opcionais):
   ],
   "unsupportedTags": ["aidescription", "enabletextenhance"],
   "parentLinkFields": ["custrecord_x_parent"],  // campos SELECT que são o elo hierárquico
-                                                  // pai-filho do record -> isparent=T,
-                                                  // ismandatory=T, onparentdelete=parentDeleteAction
-  "parentDeleteAction": "CASCADE",               // default CASCADE se parentLinkFields não vazio
+                                                  // pai-filho do record -> isparent=T, ismandatory=T.
+                                                  // Cascade-delete real vem do isparent=T (nativo do
+                                                  // NetSuite); onparentdelete só aceita NO_ACTION ou
+                                                  // SET_NULL no schema (CASCADE não existe e é rejeitado
+                                                  // pela validação server-side).
+  "parentDeleteAction": "NO_ACTION",             // default NO_ACTION se parentLinkFields não vazio
   "skip": ["customrecord_x"],
   "only": []
 }
@@ -57,7 +60,7 @@ DEFAULT_SELECT_BY_ID = {}
 
 TYPE_MAP = {
     "List/Record": "SELECT", "List": "SELECT", "Multi-Select": "MULTISELECT",
-    "Currency": "CURRENCY", "Percent": "PERCENT", "Decimal": "DECIMALNUMBER",
+    "Currency": "CURRENCY", "Percent": "PERCENT", "Decimal": "FLOAT",
     "Long Text": "CLOBTEXT", "Free-Form Text": "TEXT", "Text": "TEXT",
     "Text Area": "TEXTAREA", "Checkbox": "CHECKBOX",
     "Date": "DATE", "Datetime": "DATETIMETZ", "Integer": "INTEGER",
@@ -269,7 +272,8 @@ def load_config(args):
         "select_by_label": list(DEFAULT_SELECT_BY_LABEL),
         "unsupported_tags": list(DEFAULT_UNSUPPORTED_TAGS),
         "parent_link_fields": set(),
-        "parent_delete_action": "CASCADE",
+        "parent_delete_action": "NO_ACTION",  # único valor junto com SET_NULL aceito pelo schema;
+                                               # cascade real vem de isparent=T, não deste campo
         "skip": set(), "only": set(),
         "no_description": args.no_description,
         "config_path": None,

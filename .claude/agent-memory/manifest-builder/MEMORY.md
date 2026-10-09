@@ -7,4 +7,4 @@
 - [Projeto GrupoFF/pd_t4l Tech4Log](project_pd_t4l_grupoff.md) — scriptid real de MR tem sufixo _mr (diverge do texto do manifest), customlists documentadas inline sem seção própria, prefixo custrecord_pd_t4l_<abrev>_ por record
 - [Projeto GrupoFF/pd_mvd_mirror_vendor](project_pd_mvd_mirror_vendor.md) — duplica feature de pd_t4l; script de manutenção sem lastro no TECH-SPEC usa marcador ‡ dedicado (não reusar †)
 - [Projeto GrupoFF/pd_fcf_fill_cnab_fields](project_pd_fcf_fill_cnab_fields.md) — MANIFEST de SPEC reverso; pd-t4l-cnab.js† nunca implementado, feature real nasceu aqui; 3 divergências pd_t4l sinalizadas
-- [Projeto Drivetech/dm_ppc ProjectPriceComposition](project_dm_ppc_drivetech.md) — camadas filhas por record, limite de 40 chars apertado, ref. cruzada c/ PIS, 2 records AUXILIAR globais (não vinculados à Proposta)
+- [Projeto Drivetech/dm_ppc ProjectPriceComposition](project_dm_ppc_drivetech.md) — camadas filhas por record, limite 40 chars, ref. cruzada c/ PIS, 2 records AUXILIAR globais; customlist novo p/ campo List/Record sem lista reaproveitável

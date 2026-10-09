@@ -29,6 +29,10 @@ Config JSON (todos os campos são opcionais):
     ["empreendimento", "[scriptid=customrecord_cseg_pd_projeto]"]
   ],
   "unsupportedTags": ["aidescription", "enabletextenhance"],
+  "parentLinkFields": ["custrecord_x_parent"],  // campos SELECT que são o elo hierárquico
+                                                  // pai-filho do record -> isparent=T,
+                                                  // ismandatory=T, onparentdelete=parentDeleteAction
+  "parentDeleteAction": "CASCADE",               // default CASCADE se parentLinkFields não vazio
   "skip": ["customrecord_x"],
   "only": []
 }
@@ -52,11 +56,11 @@ DEFAULT_SELECT_BY_LABEL = []
 DEFAULT_SELECT_BY_ID = {}
 
 TYPE_MAP = {
-    "List/Record": "SELECT", "List": "SELECT",
-    "Currency": "CURRENCY", "Percent": "PERCENT",
+    "List/Record": "SELECT", "List": "SELECT", "Multi-Select": "MULTISELECT",
+    "Currency": "CURRENCY", "Percent": "PERCENT", "Decimal": "DECIMALNUMBER",
     "Long Text": "CLOBTEXT", "Free-Form Text": "TEXT", "Text": "TEXT",
     "Text Area": "TEXTAREA", "Checkbox": "CHECKBOX",
-    "Date": "DATE", "Integer": "INTEGER",
+    "Date": "DATE", "Datetime": "DATETIMETZ", "Integer": "INTEGER",
 }
 
 # marcadores que indicam "registro já existe no NetSuite, não gerar"
@@ -131,8 +135,8 @@ FIELD_TEMPLATE = """    <customrecordcustomfield scriptid="{scriptid}">
       <globalsearch>F</globalsearch>
       <help></help>
       <isformula>F</isformula>
-      <ismandatory>F</ismandatory>
-      <isparent>F</isparent>
+      <ismandatory>{ismandatory}</ismandatory>
+      <isparent>{isparent}</isparent>
       <label>{label}</label>
       <linktext></linktext>
       <maxlength></maxlength>
@@ -159,7 +163,7 @@ FIELD_TEMPLATE = """    <customrecordcustomfield scriptid="{scriptid}">
 
 def parse_manifest(text):
     records = []
-    header_re = re.compile(r"^###\s+`([^`]+)`\s*[—-]+\s*(.+?)\s*$", re.MULTILINE)
+    header_re = re.compile(r"^###\s+`([^`]+)`\*?\s*[—-]+\s*(.+?)\s*$", re.MULTILINE)
     matches = list(header_re.finditer(text))
     for i, m in enumerate(matches):
         scriptid = m.group(1).strip()
@@ -185,7 +189,7 @@ def parse_table(block):
         cells = [c.strip() for c in line.strip("|").split("|")]
         if len(cells) < 4:
             continue
-        campo, internal_id, tipo = cells[0], cells[1].strip("`").strip(), cells[2]
+        campo, internal_id, tipo = cells[0], re.sub(r"[`*]", "", cells[1]).strip(), cells[2]
         desc = "|".join(cells[3:]).strip()
         if campo.lower() == "campo" or internal_id.lower() in ("internal id", ""):
             continue
@@ -216,6 +220,7 @@ def build_field_xml(field, cfg, warnings, rec_id):
         fieldtype = "TEXT"
 
     selectrecordtype, onparentdelete, applyformatting = "", "", "F"
+    isparent, ismandatory = "F", "F"
     if fieldtype == "SELECT":
         onparentdelete = "NO_ACTION"
         target = resolve_select(field, cfg)
@@ -223,6 +228,9 @@ def build_field_xml(field, cfg, warnings, rec_id):
             warnings.append(f"[{rec_id}] SELECT sem alvo: {field['id']} ('{field['label']}') -> <selectrecordtype> vazio")
         else:
             selectrecordtype = target
+        if field["id"] in cfg["parent_link_fields"]:
+            isparent, ismandatory = "T", "T"
+            onparentdelete = cfg["parent_delete_action"]
     elif fieldtype in ("CURRENCY", "PERCENT"):
         applyformatting = "T"
 
@@ -230,6 +238,7 @@ def build_field_xml(field, cfg, warnings, rec_id):
     return FIELD_TEMPLATE.format(
         scriptid=field["id"], applyformatting=applyformatting,
         description=escape(description), fieldtype=fieldtype,
+        isparent=isparent, ismandatory=ismandatory,
         label=escape(field["label"]), onparentdelete=onparentdelete,
         selectrecordtype=escape(selectrecordtype),
     )
@@ -259,6 +268,8 @@ def load_config(args):
         "select_by_id": dict(DEFAULT_SELECT_BY_ID),
         "select_by_label": list(DEFAULT_SELECT_BY_LABEL),
         "unsupported_tags": list(DEFAULT_UNSUPPORTED_TAGS),
+        "parent_link_fields": set(),
+        "parent_delete_action": "CASCADE",
         "skip": set(), "only": set(),
         "no_description": args.no_description,
         "config_path": None,
@@ -279,6 +290,9 @@ def load_config(args):
             cfg["unsupported_tags"] = data["unsupportedTags"]
         cfg["skip"] |= set(data.get("skip", []))
         cfg["only"] |= set(data.get("only", []))
+        cfg["parent_link_fields"] |= set(data.get("parentLinkFields", []))
+        if "parentDeleteAction" in data:
+            cfg["parent_delete_action"] = data["parentDeleteAction"]
     if args.skip:
         cfg["skip"] |= {s.strip() for s in args.skip.split(",")}
     if args.only:

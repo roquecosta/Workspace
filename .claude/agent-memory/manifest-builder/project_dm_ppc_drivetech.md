@@ -67,3 +67,46 @@ chars) — não usar `auxiliar_un_`/`auxiliar_taxahora_` como prefixo de campo, 
 A unicidade de 1 registro por UN em `auxiliar_un` é validada no Restlet (Entrypoint 2), não por
 constraint nativa — registrar isso como nota de implementação, não como pendência em aberto, se
 qualquer skill futura tratar esse tema.
+
+**Correção confirmada pelo usuário em 2026-10-09, após revisão da rodada anterior: campo "Função"
+de `auxiliar_taxahora` mudou de Text para List/Record, com novo customlist cadastrado.**
+O campo `custrecord_dm_ppc_aux_th_funcao` guardava livremente EP/EC/MF/GP como chave de lookup do
+Restlet — mesmo risco de erro de digitação/case-sensitivity que já tinha levado "Unidade de
+Negócio" em `auxiliar_un` a ser List/Record. Diferença importante: "Unidade de Negócio" reaproveita
+a lista já existente do header da Proposta, mas não havia lista nativa/customlist prévio para
+EP/EC/MF/GP — foi necessário **cadastrar um customlist novo**, `customlist_dm_ppc_aux_th_funcao`
+(31 caracteres, dentro do limite), com as 4 opções (nomes completos: Engenharia de Projetos,
+Engenharia de Comissionamento/Campo, Montagem de Fabricação, Gerenciamento do Projeto). Também foi
+adicionada, por paridade, uma "Nota de implementação (unicidade)" em `auxiliar_taxahora` espelhando
+a de `auxiliar_un` (1 registro por Função, validado no Restlet, não por constraint nativa).
+**Why:** usuário confirmou explicitamente ambas as correções ao revisar o manifest da rodada
+anterior.
+**How to apply:** ao modelar um campo List/Record cujos valores não têm lista nativa/customlist
+reaproveitável no projeto, sempre cadastrar um `customlist_dm_ppc_<nome>` novo como objeto próprio
+no MANIFEST (seção "Listas Customizadas") em vez de deixar o campo como Text — não assumir que
+"parece lista fechada de valores" baste; perguntar/confirmar antes se já existe lista a reaproveitar
+(caso `auxiliar_un`) ou se precisa nascer novo (caso `auxiliar_taxahora`). Campos de "chave de
+lookup" usados por Restlet/script para buscar configuração são candidatos naturais a essa revisão
+Text→List/Record. Qualquer record AUXILIAR com garantia de unicidade lógica (1 registro por X) deve
+ter a mesma nota de implementação, não deixar implícito.
+
+**Gap recorrente confirmado em 2026-10-09, descoberto ao gerar o SDF pela primeira vez a partir do
+manifest: campo List/Record com opções fechadas no TECH-SPEC pode ficar sem customlist cadastrado
+no MANIFEST, mesmo depois de "fechado".** Os 3 campos do header da Proposta — Tipo de Operação,
+Tipo de Cliente, Unidade de Negócio — tinham suas opções descritas inline na descrição do campo
+("opções: X(1), Y(2)...") desde a rodada inicial, mas nenhum customlist tinha sido cadastrado como
+objeto próprio — o gerador SDF não conseguiu resolver o `<selectrecordtype>`. Cadastrados nesta
+rodada: `customlist_dm_ppc_tipo_operacao` (3 opções), `customlist_dm_ppc_tipo_cliente` (3 opções),
+`customlist_dm_ppc_unid_negocio` (4 opções, reaproveitado por `auxiliar_un` — mesmo objeto da nota
+acima sobre "Unidade de Negócio", agora com object real e não mais vago).
+**Why:** mesma regra já vigente para "Função" de `auxiliar_taxahora" (ver nota acima), mas aqui o
+gap passou despercebido por mais tempo porque as opções já apareciam como texto na descrição do
+campo, dando falsa sensação de "já documentado" — documentar as opções em prosa não é o mesmo que
+cadastrar o objeto customlist.
+**How to apply:** toda vez que um campo List/Record no MANIFEST tiver opções enumeradas só na
+descrição (texto "opções: X(1), Y(2)..."), tratar isso como sinal de pendência — verificar se existe
+subseção correspondente em "Listas Customizadas" linkada explicitamente (texto "a partir do
+customlist X"); se não existir, é o mesmo gap e deve ser fechado do mesmo jeito (novo customlist,
+ou apontar para lista já existente se for caso de reaproveitamento como `unid_negocio`). Rodar essa
+checagem proativamente ao gerar/revisar o manifest, não só reativamente quando o sdf-generator
+tropeçar nisso.

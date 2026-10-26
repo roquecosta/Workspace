@@ -6,7 +6,15 @@ metadata:
 ---
 
 MANIFEST em `Drivetech/src/FileCabinet/SuiteScripts/Dome/ProjectPriceComposition/Docs/MANIFEST.md`,
-TECH-SPEC na mesma pasta. Prefixo `dm_ppc_` (projeto novo, nasce com `dm_` — não `pd_`).
+TECH-SPEC na mesma pasta. **Correção em 2026-10-23: o prefixo real usado em todos os objetos do
+projeto é `pd_ppc_`, não `dm_ppc_`** — a entrada original desta memória estava errada (provável
+confusão com a regra geral de "projetos novos nascem com `dm_`"; não refletia o estado real do
+arquivo). Todos os Script IDs, Custom Record IDs, campos e customlists do MANIFEST usam
+`pd_ppc_`. Ao editar este manifest, usar sempre `pd_ppc_`, nunca `dm_ppc_`.
+**Why:** verificado lendo o MANIFEST.md diretamente — toda linha de toda tabela usa `pd_ppc_`.
+**How to apply:** não confiar cegamente nesta memória quanto a prefixo; antes de cadastrar objeto
+novo neste projeto, conferir o prefixo direto no cabeçalho de qualquer Script ID/Internal ID já
+existente no arquivo.
 
 **Arquitetura: cada camada da Proposta (CPV) é um custom record filho separado, vinculado por
 `custrecord_<prefixo>_<camada>_proposta`, nunca uma sublist única dentro de um único record.**

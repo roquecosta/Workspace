@@ -23,7 +23,8 @@
       "Bash('/c/Program Files/LibreOffice/program/soffice.exe' --headless --convert-to pdf --outdir 'C:\\\\Users\\\\Roque\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Roque-Documents-ProjectDome\\\\0e082f86-63d9-4f4d-9f58-2d8f595d2c9d\\\\scratchpad' 'C:\\\\Users\\\\Roque\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Roque-Documents-ProjectDome\\\\0e082f86-63d9-4f4d-9f58-2d8f595d2c9d\\\\scratchpad\\\\doc-cliente-inp.docx')",
       "Bash(python analyze_tables.py)",
       "Bash(node *)",
-      "WebFetch(domain:www.netsuite.com)"
+      "WebFetch(domain:www.netsuite.com)",
+      "Bash(python3)"
     ]
   },
   "hooks": {

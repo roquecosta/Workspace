@@ -118,3 +118,21 @@ customlist X"); se não existir, é o mesmo gap e deve ser fechado do mesmo jeit
 ou apontar para lista já existente se for caso de reaproveitamento como `unid_negocio`). Rodar essa
 checagem proativamente ao gerar/revisar o manifest, não só reativamente quando o sdf-generator
 tropeçar nisso.
+
+**Nova camada estrutural fechada em 2026-10-27: hierarquia de agrupamento "Grupo CPV", via custom
+record próprio com self-relation, não via campo de profundidade fixa.** Cadastrado
+`customrecord_pd_ppc_grupo`* (3 campos: vínculo à Proposta, Nome do Grupo, e "Grupo Pai" que é
+List/Record apontando para o mesmo `customrecord_pd_ppc_grupo`* — self-join). Também adicionado,
+em cada uma das 9 camadas de custo já fechadas (MP/MM/SC/DP/EP/EC/MF/GP/FD), um campo de vínculo
+opcional `custrecord_pd_ppc_<camada>_grupo`* (List/Record → `customrecord_pd_ppc_grupo`*),
+posicionado logo após "Proposta (vínculo)" em cada tabela.
+**Why:** usuário pediu suporte a múltiplos níveis de agrupamento (Categoria/Equipamento/Subgrupo)
+sem profundidade fixa no schema — self-relation resolve isso sem precisar de N campos "Nível 1,
+Nível 2, ..." nem redesenhar as 9 camadas.
+**How to apply:** ao adicionar um campo de vínculo opcional a um record de auto-relacionamento
+(self-join) numa camada já fechada deste projeto, seguir o mesmo padrão: campo List/Record
+apontando pro próprio tipo de record, nome de campo `_pai` ou equivalente, e inserir a nova coluna
+logo após o campo de vínculo à Proposta nas tabelas das 9 camadas (ordem: chave → vínculos →
+demais campos, por convenção já usada no projeto). Checar sempre o limite de 40 chars (ver nota
+acima) — `custrecord_pd_ppc_<camada>_grupo`* ficou entre 25–26 chars para todas as 9 camadas, bem
+dentro do limite mesmo nas camadas com nome de record mais longo.

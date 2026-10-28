@@ -24,7 +24,9 @@
       "Bash(python analyze_tables.py)",
       "Bash(node *)",
       "WebFetch(domain:www.netsuite.com)",
-      "Bash(python3)"
+      "Bash(python3)",
+      "Bash(git status *)",
+      "Bash(git diff *)"
     ]
   },
   "hooks": {

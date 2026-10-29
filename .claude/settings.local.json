@@ -28,7 +28,9 @@
       "Bash(git status *)",
       "Bash(git diff *)",
       "Bash(git push *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(git checkout *)",
+      "Bash(git submodule *)"
     ]
   },
   "hooks": {

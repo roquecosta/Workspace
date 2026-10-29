@@ -96,6 +96,14 @@ Os dois pontos de entrada coexistem; o `solution-architect` reconhece qual se ap
 
 ## Etapa 2 — Implementação
 
+Antes de qualquer alteração de código ou primeiro commit do card, carregue a skill do time
+(padrão de versionamento Dome, origem em `workspace/.claude/skills/git-branching/`):
+- `@.claude/skills/git-branching/SKILL.md`
+
+Ela define a criação e nomenclatura de branch (`tipo/idcard`, sempre a partir da `main`
+atualizada). Nenhum desenvolvimento começa sem uma branch criada segundo essa convenção — se o
+usuário não informar o card do ClickUp, pergunte antes de criar a branch.
+
 Carregue obrigatoriamente:
 - `@.claude/agents/suitescript-dev/suitescript-dev.md`
 - `@NetsuiteTools/netsuite-tools-api.md`

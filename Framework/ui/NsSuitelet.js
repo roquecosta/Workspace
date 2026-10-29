@@ -67,6 +67,8 @@
  *   'modal'     — NsModal     (incluído sempre por padrão)
  *   'sidebar'   — NsSidebar   (opcional)
  *   'kpi-card'  — NsKpiCard   (opcional)
+ *   'line-chart'— NsLineChart (opcional)
+ *   'router'    — NsRouter    (opcional)
  *
  *   Passe o array `components` para adicionar os opcionais.
  *   Os quatro padrão (topbar, table, form, modal) são sempre incluídos.
@@ -109,8 +111,12 @@ define(
             'table':    'ns-table.js',
             'form':     'ns-form.js',
             'modal':    'ns-modal.js',
+            'alert':    'ns-alert.js',
             'sidebar':  'ns-sidebar.js',
             'kpi-card': 'ns-kpi-card.js',
+            'line-chart': 'ns-line-chart.js',
+            'card':     'ns-card.js',
+            'router':   'ns-router.js',
         };
 
         /**
@@ -118,7 +124,7 @@ define(
          * NsHttp NÃO entra aqui — tem tag própria no buildHTML para garantir
          * que carrega antes de qualquer componente de UI ou script do projeto.
          */
-        const CORE_COMPONENTS = ['icons', 'topbar', 'table', 'form', 'modal'];
+        const CORE_COMPONENTS = ['icons', 'topbar', 'table', 'form', 'modal', 'alert'];
 
         /**
          * Todos os arquivos próprios do framework (tokens + componentes).
@@ -291,7 +297,6 @@ define(
             const componentUrls   = resolveComponentUrls(options.components);
             const projectFiles    = resolveProjectFiles(options.statics);
             const parametersBlock = buildParametersBlock(options.parameters);
-            const hasSidebar      = Array.isArray(options.components) && options.components.indexOf('sidebar') !== -1;
 
             return [
                 '<!DOCTYPE html>',
@@ -314,13 +319,13 @@ define(
                 /* Layout base */
                 '<style>',
                 'body { display: flex; min-height: 100vh; }',
-                '.ns-has-sidebar .ns-main { margin-left: var(--ns-sidebar-w, 220px); }',
+                'body:has(#sidebar:not(:empty)) .ns-main { margin-left: var(--ns-sidebar-w, 220px); }',
                 '.ns-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }',
                 '.ns-content { padding: var(--ns-content-py) var(--ns-content-px); flex: 1; }',
                 '</style>',
 
                 '</head>',
-                '<body' + (hasSidebar ? ' class="ns-has-sidebar"' : '') + '>',
+                '<body>',
 
                 /* Pontos de montagem padrão */
                 '<div id="sidebar"></div>',
@@ -460,7 +465,7 @@ define(
          */
         function buildParametersBlock(extraParams) {
             const user = runtime.getCurrentUser();
-
+            log.audit('user', user)
             const params = Object.assign({}, extraParams || {}, {
                 currentUserId:    user.id,
                 currentUserEmail: user.email,

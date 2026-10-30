@@ -26,7 +26,11 @@
       "WebFetch(domain:www.netsuite.com)",
       "Bash(python3)",
       "Bash(git status *)",
-      "Bash(git diff *)"
+      "Bash(git diff *)",
+      "Bash(git push *)",
+      "Bash(git commit *)",
+      "Bash(git checkout *)",
+      "Bash(git submodule *)"
     ]
   },
   "hooks": {

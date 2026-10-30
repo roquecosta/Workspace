@@ -244,7 +244,7 @@ const NsIcons = (function () {
     /**
      * Retorna o HTML de um icone como string.
      *
-     * @param {string} name       - Nome do icone (ex.: 'search', 'trash')
+     * @param {keyof typeof ICONS} name   - Nome do icone (ex.: 'search', 'trash')
      * @param {Object} [options]
      * @param {number} [options.size=18]        - Tamanho em px (width e height)
      * @param {string} [options.className='']   - Classes CSS extras no wrapper
@@ -295,10 +295,14 @@ const NsIcons = (function () {
        ICONS - enum publico: cada chave aponta para seu proprio nome.
        Uso: NsIcons.ICONS.check  ->  'check'  (passavel ao render)
     =========================================================== */
-    const ICONS_ENUM = Object.keys(ICONS).reduce(function (acc, key) {
-        acc[key] = key;
-        return acc;
-    }, {});
+
+    /** @type {{ [K in keyof typeof ICONS]: K }} */
+    const ICONS_ENUM = /** @type {any} */ (
+        Object.keys(ICONS).reduce(function (acc, key) {
+            acc[key] = key;
+            return acc;
+        }, {})
+    );
 
     return {
         render : render,

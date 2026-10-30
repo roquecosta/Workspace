@@ -8,3 +8,4 @@
 - [Deploy — Git Bash mangula paths do suitecloud](feedback_gitbash_suitecloud_path_conversion.md) — prefixar `MSYS_NO_PATHCONV=1` (ou usar PowerShell) em `file:upload --paths "/SuiteScripts/..."` via Bash tool.
 - [pd_c_netsuite_tools — convenção de caminho relativo](feedback_netsuite_tools_lib_path_convention.md) — lib é sempre filha do namespace (`project_dome/` ou `projectdome/`), nunca irmã de SuiteScripts; use `../../pd_c_netsuite_tools/...` mesmo se não existir no git.
 - [Aloia pd_irl_rma_inbound_shipment](project_aloia_irl_rma_inbound_shipment.md) — EP1 implementado (prefixo IRL assumido); EP2/EP3 pendentes; pontos de implementação não cobertos pelo TECH-SPEC listados.
+- [ns-router + deep-linking (Drivetech/PPC Painel)](project_ns_router_deep_linking.md) — componente Framework genérico (push/replace/getState); Drivetech é git repo aninhado próprio, rode git status/diff com cwd dentro de Drivetech/.

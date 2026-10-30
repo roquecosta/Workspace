@@ -16,6 +16,7 @@
  *             options: [{ value: 'aberto', label: 'Aberto' }, { value: 'fechado', label: 'Fechado' }] },
  *           { key: 'data',       label: 'Data',        type: 'date'      },
  *           { key: 'valor',      label: 'Valor (R$)',  type: 'number'    },
+ *           { key: 'preco',      label: 'Preço',       type: 'currency', currency: 'BRL' },
  *           { key: 'ativo',      label: 'Ativo',       type: 'checkbox'  },
  *           { key: 'descricao',  label: 'Descrição',   type: 'textarea'  },
  *           { key: 'tags',       label: 'Tags',        type: 'tags'      },
@@ -51,6 +52,7 @@
  *
  *   text               — input texto livre
  *   number             — input numérico
+ *   currency           — input monetário com máscara (ver seção própria abaixo)
  *   date               — date picker nativo
  *   select             — dropdown (requer options: [{ value, label }])
  *   checkbox           — toggle booleano
@@ -60,11 +62,49 @@
  *   autocomplete       — busca assíncrona genérica (requer source: fn(query, done))
  *   restlet-autocomplete — busca via RESTlet NetSuite com suporte a filtros entre
  *                          campos e multi-select com badges
+ *   listbox            — lista estática (options) sempre visível, com checkbox por
+ *                         item (ou radio se multi:false) e busca opcional
+ *
+ * ── LISTBOX ────────────────────────────────────────────────────
+ *
+ *   Lista fixa de opções (sem busca em servidor), com checkbox por item —
+ *   diferente de autocomplete/restlet-autocomplete, que são "digite para
+ *   buscar, selecione, vira badge". No listbox todas as opções ficam
+ *   visíveis o tempo todo.
+ *
+ *   Propriedades do campo (type: 'listbox'):
+ *
+ *     options       {Array<{value,label}>} — opções estáticas        (obrigatório)
+ *     multi         {boolean}   — múltipla seleção via checkbox       (padrão: true)
+ *     searchable    {boolean}   — exibe input de busca acima da lista (padrão: true)
+ *     placeholder   {string}    — texto do input de busca             (padrão: 'Buscar…')
+ *     emptyText     {string}    — texto quando a busca não acha nada  (padrão: 'Nenhum item encontrado.')
+ *
+ *   getData() retorna:
+ *     — multi: true   → { key: ['1', '2'] }  (array de values, string)
+ *     — multi: false  → { key: '1' }         (value único, string)
+ *
+ * ── ONCHANGE POR CAMPO ───────────────────────────────────────────
+ *
+ *   Qualquer campo aceita `onChange: function(value, allData) {}`, disparado
+ *   a cada mudança de valor (campos simples, tags e listbox). Útil para
+ *   forms sem botão Salvar (filtros que aplicam ao vivo — ver `footer: false`).
+ *
+ * ── FORM SEM BOTÃO SALVAR (filtro embutido) ──────────────────────
+ *
+ *   new NsForm(container, {
+ *       footer: false,             // não renderiza o footer (Salvar/Cancelar)
+ *       columns: 1,
+ *       fields: [
+ *           { key: 'status', label: 'Status', type: 'select', options: [...],
+ *             onChange: function(value) { recarregarLista(value); } },
+ *       ],
+ *   });
  *
  * ── RESTLET-AUTOCOMPLETE ─────────────────────────────────────────
  *
- *   Integra nativamente com a função global `get(restletOptions, onSuccess, onError)`
- *   que já existe no ambiente NetSuite.
+ *   Busca via NsHttp (new NsHttp({ script, deployment }).get({ parameters })) —
+ *   o RESTlet deve retornar um array `[{ id, name }]`.
  *
  *   Propriedades do campo (type: 'restlet-autocomplete'):
  *
@@ -93,6 +133,46 @@
  *     — campo simples  → { produto: '42' }               (id como string)
  *     — campo multi    → { produto: ['42', '7', '15'] }  (array de ids)
  *
+ * ── CURRENCY ─────────────────────────────────────────────────────
+ *
+ *   Input monetário com máscara "digite da direita pra esquerda" (padrão
+ *   caixa eletrônico/e-commerce BR): cada dígito digitado entra como centavo
+ *   e empurra os demais para a esquerda, formatando ao vivo com separador de
+ *   milhar e símbolo da moeda via Intl.NumberFormat (mesma lógica de
+ *   NsTable._formatCurrency, para exibição idêntica entre tabela e form).
+ *
+ *   Propriedades do campo (type: 'currency'):
+ *
+ *     currency   {string}  — código ISO 4217               (padrão: 'BRL')
+ *     locale     {string}  — locale BCP 47                  (padrão: 'pt-BR')
+ *
+ *   Exemplo:
+ *
+ *   { key: 'valorUnitario', label: 'Valor Unitário', type: 'currency',
+ *     currency: 'BRL', required: true }
+ *
+ *   getData() retorna o valor como **number** (não string, diferente do tipo
+ *   'number') — `null` quando o campo está vazio, nunca uma string formatada.
+ *   setData({ valorUnitario: 1234.5 }) aceita number e já exibe formatado.
+ *
+ * ── GRUPOS DE CAMPOS ─────────────────────────────────────────────
+ *
+ *   Propriedade opcional `group: string` em qualquer field. Sempre que o
+ *   `group` mudar em relação ao campo anterior, um header full-width é
+ *   inserido antes dele no grid. Campos sem `group` (ou forms onde nenhum
+ *   field declara `group`) renderizam exatamente como antes — sem headers.
+ *
+ *   Exemplo:
+ *
+ *   fields: [
+ *       { key: 'operationType', label: 'Tipo de Operação', type: 'select',
+ *         options: [...], group: 'Classificação' },
+ *       { key: 'clientType',    label: 'Tipo de Cliente',  type: 'select',
+ *         options: [...], group: 'Classificação' },
+ *       { key: 'marginPercent', label: 'Margem (%)',       type: 'number',
+ *         group: 'Margem' },
+ *   ]
+ *
  * ── VALIDAÇÃO ────────────────────────────────────────────────────
  *
  *   required: true                          — campo obrigatório
@@ -102,6 +182,23 @@
  *   }
  *   validateOn: 'blur' | 'submit'           — padrão: 'blur' para campos
  *                                             simples, 'submit' para compostos
+ *
+ * ── ESTILO DO HINT (texto fixo vs. popover sob demanda) ───────────
+ *
+ *   Por padrão, `field.hint` renderiza como texto fixo abaixo do input
+ *   (`.ns-form-hint`). Opção de form `hintStyle: 'tooltip'` troca, PARA TODOS
+ *   os campos do form que tiverem `hint`, esse texto fixo por um botão "?" ao
+ *   lado do label — clicar abre um popover com o texto, clicar de novo (ou
+ *   fora) fecha. Útil para forms densos onde o texto fixo ocupa espaço demais.
+ *   Sem `hintStyle` (ou `hintStyle: 'below'`, o padrão), nada muda.
+ *
+ *   new NsForm(container, {
+ *       hintStyle: 'tooltip',
+ *       fields: [
+ *           { key: 'margem', label: 'Margem (%)', type: 'number',
+ *             hint: 'Percentual de lucro líquido sobre o faturamento.' },
+ *       ],
+ *   });
  */
 class NsForm {
 
@@ -124,9 +221,12 @@ class NsForm {
             visible:      true,
             submitLabel:  'Salvar',
             cancelLabel:  'Cancelar',
+            footer:       true,
+            hintStyle:    'below', // 'below' (padrão, texto fixo) | 'tooltip' (botão "?" + popover)
         }, options);
         this._errors      = {};
         this._tagValues   = {};     // estado interno dos campos tipo 'tags'
+        this._currencyValues = {}; // estado interno (number) dos campos tipo 'currency'
         this._acTimer     = {};     // timers de debounce do autocomplete
         this._raState     = {};     // estado interno dos campos tipo 'restlet-autocomplete'
         this._listeners   = [];
@@ -201,14 +301,7 @@ class NsForm {
         var opts    = this._options;
         var visible = opts.visible !== false;
 
-        this._container.innerHTML = [
-            '<div class="ns-form-card" style="' + (visible ? '' : 'display:none') + '">',
-            opts.title ? '<div class="ns-form-header"><span class="ns-form-title">' + opts.title + '</span></div>' : '',
-            '<div class="ns-form-body">',
-            '<div class="ns-form-grid" style="--ns-form-cols:' + opts.columns + '">',
-            opts.fields.map(function(f) { return this._renderField(f); }, this).join(''),
-            '</div>',
-            '</div>',
+        var footerHtml = opts.footer === false ? '' : [
             '<div class="ns-form-footer">',
             '<div class="ns-form-footer-left" id="ns-form-global-error-' + this._uid() + '"></div>',
             '<div class="ns-form-footer-actions">',
@@ -223,30 +316,83 @@ class NsForm {
             '</button>',
             '</div>',
             '</div>',
+        ].join('');
+
+        this._container.innerHTML = [
+            '<div class="ns-form-card" style="' + (visible ? '' : 'display:none') + '">',
+            opts.title ? '<div class="ns-form-header"><span class="ns-form-title">' + opts.title + '</span></div>' : '',
+            '<div class="ns-form-body">',
+            '<div class="ns-form-grid" style="--ns-form-cols:' + opts.columns + '">',
+            opts.fields.map(function(f, i) {
+                var prevGroup  = i > 0 ? opts.fields[i - 1].group : null;
+                var groupHtml  = (f.group && f.group !== prevGroup) ? this._renderGroupHeader(f.group, i === 0) : '';
+                return groupHtml + this._renderField(f);
+            }, this).join(''),
+            '</div>',
+            '</div>',
+            footerHtml,
             '</div>',
         ].join('');
 
         this._bindFormEvents();
         this._bindFieldEvents();
+        if (this._options.hintStyle === 'tooltip') this._bindHintEvents();
         this._injectStyles();
     }
 
     /* ── HTML de cada tipo de campo ─────────────────────────────── */
 
     _renderField(field) {
-        var id      = 'ns-field-' + field.key;
-        var isWide  = field.wide || field.type === 'textarea';
-        var input   = this._renderInput(field, id);
+        var id          = 'ns-field-' + field.key;
+        var isWide      = field.wide || field.type === 'textarea';
+        var input       = this._renderInput(field, id);
+        var useTooltip  = this._options.hintStyle === 'tooltip' && !!field.hint;
 
         return [
             '<div class="ns-form-field' + (isWide ? ' ns-form-field--wide' : '') + '" data-field-key="' + field.key + '">',
+            '<span class="ns-form-label-row">',
             '<label class="ns-form-label" for="' + id + '">',
             field.label,
             field.required ? '<span class="ns-form-required" aria-hidden="true">*</span>' : '',
             '</label>',
+            useTooltip ? this._renderHintTrigger(field) : '',
+            '</span>',
             input,
-            field.hint ? '<div class="ns-form-hint">' + field.hint + '</div>' : '',
+            (!useTooltip && field.hint) ? '<div class="ns-form-hint">' + field.hint + '</div>' : '',
             '<div class="ns-form-error" id="ns-error-' + field.key + '" role="alert"></div>',
+            '</div>',
+        ].join('');
+    }
+
+    /**
+     * Botão "?" + popover do hint em modo `hintStyle: 'tooltip'` (ver cabeçalho
+     * da classe) — substitui o `.ns-form-hint` fixo abaixo do input. Popover
+     * começa fechado; `_bindHintEvents` cuida de abrir/fechar por clique.
+     * @param {object} field
+     * @returns {string}
+     */
+    _renderHintTrigger(field) {
+        return [
+            '<span class="ns-form-hint-wrap">',
+            '<button type="button" class="ns-form-hint-trigger" data-hint-key="' + field.key + '" aria-label="Ajuda: ' + field.label + '">?</button>',
+            '<div class="ns-form-hint-popover" role="tooltip" data-hint-key="' + field.key + '">' + field.hint + '</div>',
+            '</span>',
+        ].join('');
+    }
+
+    /**
+     * Header full-width de um grupo de campos (propriedade `field.group`).
+     * Inserido antes do primeiro campo de cada grupo, sempre que `group`
+     * muda em relação ao campo anterior. O primeiro grupo do form não tem
+     * borda superior, para não duplicar a borda do header do card.
+     * @param {string}  label
+     * @param {boolean} isFirst
+     * @returns {string}
+     */
+    _renderGroupHeader(label, isFirst) {
+        return [
+            '<div class="ns-form-group-header' + (isFirst ? ' ns-form-group-header--first' : '') + '">',
+            label,
             '</div>',
         ].join('');
     }
@@ -334,8 +480,40 @@ class NsForm {
                     '</div>',
                 ].join('');
 
+            case 'listbox': {
+                var isMulti      = field.multi !== false;
+                var searchable   = field.searchable !== false;
+                var inputType    = isMulti ? 'checkbox' : 'radio';
+                var groupName    = isMulti ? (id + '-opt') : field.key;
+                var options      = field.options || [];
+
+                return [
+                    '<div class="ns-form-listbox" data-field-key="' + field.key + '">',
+                    searchable
+                        ? '<input type="text" class="ns-input ns-form-listbox-search" id="' + id + '" autocomplete="off" placeholder="' + (field.placeholder || 'Buscar…') + '">'
+                        : '',
+                    '<div class="ns-form-listbox-list" role="listbox">',
+                    options.map(function(o) {
+                        return [
+                            '<label class="ns-form-listbox-option">',
+                            '<input type="' + inputType + '" name="' + groupName + '" value="' + o.value + '">',
+                            '<span class="ns-form-listbox-option-label">' + o.label + '</span>',
+                            '</label>',
+                        ].join('');
+                    }).join(''),
+                    options.length === 0 ? '<div class="ns-form-listbox-empty">' + (field.emptyText || 'Nenhum item encontrado.') + '</div>' : '',
+                    '<div class="ns-form-listbox-empty ns-form-listbox-no-match" style="display:none">' + (field.emptyText || 'Nenhum item encontrado.') + '</div>',
+                    '</div>',
+                    '</div>',
+                    '<input type="hidden" class="ns-form-input" name="' + field.key + '">',
+                ].join('');
+            }
+
             case 'number':
                 return '<input type="number" class="ns-input ns-form-input" id="' + id + '" name="' + field.key + '" placeholder="' + (field.placeholder || '0') + '" ' + (field.min != null ? 'min="' + field.min + '"' : '') + ' ' + (field.max != null ? 'max="' + field.max + '"' : '') + '>';
+
+            case 'currency':
+                return '<input type="text" inputmode="decimal" class="ns-input ns-form-input ns-mono" id="' + id + '" name="' + field.key + '" placeholder="' + (field.placeholder || this._formatCurrencyDisplay(0, field.currency, field.locale)) + '" autocomplete="off">';
 
             case 'date':
                 return '<input type="date" class="ns-input ns-form-input" id="' + id + '" name="' + field.key + '">';
@@ -380,6 +558,8 @@ class NsForm {
                 case 'file':                 return self._bindFileEvents(field);
                 case 'autocomplete':         return self._bindAutocompleteEvents(field);
                 case 'restlet-autocomplete': return self._bindRestletAutocompleteEvents(field);
+                case 'currency':             return self._bindCurrencyEvents(field);
+                case 'listbox':              return self._bindListboxEvents(field);
                 default:                     return self._bindSimpleFieldEvents(field);
             }
         });
@@ -402,6 +582,152 @@ class NsForm {
         var inputFn = function() { self._clearError(field.key); };
         input.addEventListener('input', inputFn);
         this._listeners.push({ el: input, type: 'input', fn: inputFn });
+
+        // valor "comitado" (select/date/checkbox mudam aqui; texto no blur/enter)
+        var changeFn = function() { self._fireOnChange(field); };
+        input.addEventListener('change', changeFn);
+        this._listeners.push({ el: input, type: 'change', fn: changeFn });
+    }
+
+    /**
+     * Abre/fecha o popover do hint (modo `hintStyle: 'tooltip'`, ver cabeçalho
+     * da classe) — um único listener delegado no container (clique no botão
+     * "?" alterna o próprio popover e fecha qualquer outro aberto no mesmo
+     * form) + um listener no `document` pra fechar ao clicar fora do form.
+     */
+    _bindHintEvents() {
+        var self = this;
+
+        var clickFn = function(e) {
+            var trigger = e.target.closest('.ns-form-hint-trigger');
+            self._container.querySelectorAll('.ns-form-hint-popover.is-open').forEach(function(p) {
+                if (!trigger || p.dataset.hintKey !== trigger.dataset.hintKey) p.classList.remove('is-open');
+            });
+            if (!trigger) return;
+            var popover = self._container.querySelector('.ns-form-hint-popover[data-hint-key="' + trigger.dataset.hintKey + '"]');
+            if (popover) popover.classList.toggle('is-open');
+        };
+        this._container.addEventListener('click', clickFn);
+        this._listeners.push({ el: this._container, type: 'click', fn: clickFn });
+
+        var outsideFn = function(e) {
+            if (self._container.contains(e.target)) return;
+            self._container.querySelectorAll('.ns-form-hint-popover.is-open').forEach(function(p) { p.classList.remove('is-open'); });
+        };
+        document.addEventListener('click', outsideFn);
+        this._listeners.push({ el: document, type: 'click', fn: outsideFn });
+    }
+
+    /** Dispara field.onChange(value, allData), se definido. */
+    _fireOnChange(field) {
+        if (typeof field.onChange === 'function') {
+            field.onChange(this._getFieldValue(field), this.getData());
+        }
+    }
+
+    /* ── Listbox (lista fixa com checkbox/radio) ────────────────── */
+
+    _bindListboxEvents(field) {
+        var self = this;
+        var wrap = this._container.querySelector('.ns-form-listbox[data-field-key="' + field.key + '"]');
+        if (!wrap) return;
+
+        var search = wrap.querySelector('.ns-form-listbox-search');
+        var list   = wrap.querySelector('.ns-form-listbox-list');
+        var hidden = this._container.querySelector('input[name="' + field.key + '"]');
+        var isMulti = field.multi !== false;
+
+        var changeFn = function() {
+            var checked = Array.prototype.slice.call(
+                list.querySelectorAll('input[type="checkbox"]:checked, input[type="radio"]:checked')
+            ).map(function(inp) { return inp.value; });
+
+            if (hidden) hidden.value = isMulti ? JSON.stringify(checked) : (checked[0] || '');
+
+            self._clearError(field.key);
+            self._fireOnChange(field);
+        };
+        list.addEventListener('change', changeFn);
+        this._listeners.push({ el: list, type: 'change', fn: changeFn });
+
+        if (search) {
+            var noMatch = list.querySelector('.ns-form-listbox-no-match');
+            var searchFn = function() {
+                var query   = search.value.trim().toLowerCase();
+                var visible = 0;
+                list.querySelectorAll('.ns-form-listbox-option').forEach(function(option) {
+                    var label = option.querySelector('.ns-form-listbox-option-label').textContent.toLowerCase();
+                    var match = !query || label.indexOf(query) !== -1;
+                    option.style.display = match ? '' : 'none';
+                    if (match) visible++;
+                });
+                if (noMatch) noMatch.style.display = visible === 0 ? '' : 'none';
+            };
+            search.addEventListener('input', searchFn);
+            this._listeners.push({ el: search, type: 'input', fn: searchFn });
+        }
+    }
+
+    /* ── Currency ────────────────────────────────────────────────── */
+
+    /**
+     * Máscara "da direita pra esquerda": cada dígito digitado entra como
+     * centavo, empurrando os demais. O valor numérico real fica em
+     * `_currencyValues[field.key]` — o input só mostra o texto formatado.
+     */
+    _bindCurrencyEvents(field) {
+        var self  = this;
+        var input = this._getInput(field.key);
+        if (!input) return;
+
+        this._currencyValues[field.key] = null;
+
+        var inputFn = function() {
+            var digits = input.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '');
+
+            if (!digits) {
+                self._currencyValues[field.key] = null;
+                input.value = '';
+            } else {
+                var num = parseInt(digits, 10) / 100;
+                self._currencyValues[field.key] = num;
+                input.value = self._formatCurrencyDisplay(num, field.currency, field.locale);
+            }
+            self._clearError(field.key);
+            self._fireOnChange(field);
+        };
+        input.addEventListener('input', inputFn);
+        this._listeners.push({ el: input, type: 'input', fn: inputFn });
+
+        // cursor sempre no fim — evita edição no meio do valor formatado
+        var caretFn = function() {
+            var pos = input.value.length;
+            setTimeout(function() { input.setSelectionRange(pos, pos); }, 0);
+        };
+        input.addEventListener('click', caretFn);
+        input.addEventListener('keyup', caretFn);
+        this._listeners.push({ el: input, type: 'click', fn: caretFn });
+        this._listeners.push({ el: input, type: 'keyup', fn: caretFn });
+
+        var validateOn = field.validateOn || 'blur';
+        if (validateOn === 'blur') {
+            var blurFn = function() { self._validateField(field); };
+            input.addEventListener('blur', blurFn);
+            this._listeners.push({ el: input, type: 'blur', fn: blurFn });
+        }
+    }
+
+    /**
+     * @param {number} num
+     * @param {string} [currencyCode='BRL']
+     * @param {string} [locale='pt-BR']
+     * @returns {string}
+     */
+    _formatCurrencyDisplay(num, currencyCode, locale) {
+        return new Intl.NumberFormat(locale || 'pt-BR', {
+            style:    'currency',
+            currency: currencyCode || 'BRL',
+        }).format(num || 0);
     }
 
     /* ── Tags ────────────────────────────────────────────────────── */
@@ -421,6 +747,7 @@ class NsForm {
             if (!val) return;
             self._addTag(field.key, val, wrap, textInput);
             textInput.value = '';
+            self._fireOnChange(field);
         };
         textInput.addEventListener('keydown', keyFn);
         this._listeners.push({ el: textInput, type: 'keydown', fn: keyFn });
@@ -431,6 +758,7 @@ class NsForm {
             if (!btn) return;
             var tag = btn.dataset.tag;
             self._removeTag(field.key, tag, wrap);
+            self._fireOnChange(field);
         };
         wrap.addEventListener('click', clickFn);
         this._listeners.push({ el: wrap, type: 'click', fn: clickFn });
@@ -663,8 +991,7 @@ class NsForm {
     }
 
     /**
-     * Faz a requisição ao RESTlet e popula _raState[field.key].allItems.
-     * Reaproveita a função global `get()` que já existe no ambiente.
+     * Faz a requisição ao RESTlet via NsHttp e popula _raState[field.key].allItems.
      */
     _raFetch(field, wrap, textInput, dropdown, hidden, statusEl, badgesEl) {
         var self = this;
@@ -687,35 +1014,27 @@ class NsForm {
             });
         }
 
-        var restletOptions = {
-            script:     field.restletScriptId,
-            deployment: field.restletDeploymentId,
-            parameters: parameters,
-        };
-
         // UI: loading
         self._raSetStatus(statusEl, 'loading', 'Carregando…');
         textInput.disabled = true;
 
-        get(
-            restletOptions,
-            function(data) {
-                // data deve ser Array<{ id, name }>
-                self._raState[field.key].allItems = Array.isArray(data) ? data : [];
-                textInput.disabled = false;
-                self._raSetStatus(statusEl, null);
-                // Valida se o item selecionado ainda existe na nova lista
-                self._raRevalidateSelection(field, textInput, hidden, badgesEl);
-                // Atualiza dropdown se estiver visível
-                if (dropdown.style.display !== 'none') {
-                    self._raFilterDropdown(field, wrap, textInput, dropdown, hidden, badgesEl);
-                }
-            },
-            function(errorMessage) {
-                textInput.disabled = false;
-                self._raSetStatus(statusEl, 'error', errorMessage || 'Erro ao carregar');
+        var http = new NsHttp({ script: field.restletScriptId, deployment: field.restletDeploymentId });
+
+        http.get({ parameters: parameters }).then(function(data) {
+            // data deve ser Array<{ id, name }>
+            self._raState[field.key].allItems = Array.isArray(data) ? data : [];
+            textInput.disabled = false;
+            self._raSetStatus(statusEl, null);
+            // Valida se o item selecionado ainda existe na nova lista
+            self._raRevalidateSelection(field, textInput, hidden, badgesEl);
+            // Atualiza dropdown se estiver visível
+            if (dropdown.style.display !== 'none') {
+                self._raFilterDropdown(field, wrap, textInput, dropdown, hidden, badgesEl);
             }
-        );
+        }).catch(function(err) {
+            textInput.disabled = false;
+            self._raSetStatus(statusEl, 'error', (err && err.message) || 'Erro ao carregar');
+        });
     }
 
     /** Filtra _raState.allItems pelo texto digitado e renderiza o dropdown */
@@ -959,6 +1278,10 @@ class NsForm {
             case 'tags':
                 return this._tagValues[field.key] || [];
 
+            case 'currency':
+                var curVal = this._currencyValues[field.key];
+                return (curVal === undefined) ? null : curVal;
+
             case 'file':
                 var fileInput = this._getInput(field.key);
                 return fileInput ? fileInput.files : null;
@@ -972,6 +1295,19 @@ class NsForm {
                 if (!state) return field.multi ? [] : '';
                 if (field.multi) return state.selectedIds.slice();       // array de ids
                 return state.selectedIds[0] || '';                        // id ou ''
+
+            case 'listbox': {
+                var lbHidden = this._container.querySelector('input[name="' + field.key + '"]');
+                var lbMulti  = field.multi !== false;
+                if (!lbHidden || !lbHidden.value) return lbMulti ? [] : '';
+                if (!lbMulti) return lbHidden.value;
+                try {
+                    var parsed = JSON.parse(lbHidden.value);
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch (e) {
+                    return [];
+                }
+            }
 
             default:
                 var input = this._getInput(field.key);
@@ -1001,6 +1337,17 @@ class NsForm {
 
             case 'file':
                 // FileInput não pode ser preenchido programaticamente por segurança
+                break;
+
+            case 'currency':
+                var curInput = this._getInput(field.key);
+                var curNum   = (value === '' || value === null || value === undefined) ? null : Number(value);
+                this._currencyValues[field.key] = (curNum != null && !isNaN(curNum)) ? curNum : null;
+                if (curInput) {
+                    curInput.value = (this._currencyValues[field.key] != null)
+                        ? this._formatCurrencyDisplay(this._currencyValues[field.key], field.currency, field.locale)
+                        : '';
+                }
                 break;
 
             case 'autocomplete':
@@ -1034,6 +1381,24 @@ class NsForm {
                     var selectedItem = state.allItems.find(function(i) { return String(i.id) === ids[0]; });
                     if (raText) raText.value = selectedItem ? selectedItem.name : (ids[0] || '');
                 }
+                break;
+            }
+
+            case 'listbox': {
+                var lbMultiSet = field.multi !== false;
+                var lbIds = Array.isArray(value)
+                    ? value.map(String)
+                    : (value !== '' && value != null ? [String(value)] : []);
+
+                var lbWrap = this._container.querySelector('.ns-form-listbox[data-field-key="' + field.key + '"]');
+                if (lbWrap) {
+                    lbWrap.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(function(inp) {
+                        inp.checked = lbIds.indexOf(inp.value) !== -1;
+                    });
+                }
+
+                var lbHiddenSet = this._container.querySelector('input[name="' + field.key + '"]');
+                if (lbHiddenSet) lbHiddenSet.value = lbMultiSet ? JSON.stringify(lbIds) : (lbIds[0] || '');
                 break;
             }
 
@@ -1091,6 +1456,47 @@ class NsForm {
         style.id  = 'ns-form-styles';
         style.textContent = [
 
+            /* ── Utilitários base ──
+             * Copiados de ns-topbar / ns-modal / ns-table para garantir
+             * disponibilidade mesmo quando esses componentes não são
+             * instanciados na página (ex.: tela init sem topbar/tabela).
+             * Se já injetados por outro componente a cascata resolve — sem conflito. */
+            '.ns-btn {',
+            'display:inline-flex;align-items:center;gap:6px;padding:7px 14px;',
+            'border-radius:var(--ns-radius-sm);font-family:var(--ns-font);',
+            'font-size:var(--ns-text-sm);font-weight:500;cursor:pointer;',
+            'border:none;transition:background .12s,opacity .12s;',
+            'white-space:nowrap;line-height:1;',
+            '}',
+            '.ns-btn:disabled{opacity:.4;cursor:not-allowed}',
+            '.ns-btn-primary{background:var(--ns-accent);color:#fff;border:none}',
+            '.ns-btn-primary:hover:not(:disabled){background:var(--ns-accent-2)}',
+            '.ns-btn-ghost{background:transparent;color:var(--ns-text-2);border:1px solid var(--ns-border)}',
+            '.ns-btn-ghost:hover:not(:disabled){background:var(--ns-bg);color:var(--ns-text-1)}',
+
+            /* Input e Select escopados ao card do form.
+             * Override necessário: ns-table injeta .ns-input com padding-left:32px
+             * (reservado para ícone de busca), o que quebra inputs de formulário. */
+            '.ns-form-card .ns-input{',
+            'font-family:var(--ns-font);font-size:var(--ns-text-sm);',
+            'border:1px solid var(--ns-border);border-radius:var(--ns-radius-sm);',
+            'background:var(--ns-bg);color:var(--ns-text-1);',
+            'outline:none;transition:border-color .15s,box-shadow .15s;',
+            'width:100%;padding:7px 10px;',
+            '}',
+            '.ns-form-card .ns-input:focus{border-color:var(--ns-accent);box-shadow:0 0 0 3px rgba(43,91,224,.1);background:var(--ns-surface)}',
+            '.ns-form-card .ns-select{',
+            'font-family:var(--ns-font);font-size:var(--ns-text-sm);',
+            'border:1px solid var(--ns-border);border-radius:var(--ns-radius-sm);',
+            'background:var(--ns-bg);color:var(--ns-text-1);',
+            'outline:none;transition:border-color .15s,box-shadow .15s;',
+            'width:100%;padding:7px 28px 7px 10px;',
+            'appearance:none;cursor:pointer;',
+            "background-image:url(\"data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23A8A698' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\");",
+            'background-repeat:no-repeat;background-position:right 10px center;',
+            '}',
+            '.ns-form-card .ns-select:focus{border-color:var(--ns-accent);outline:none}',
+
             /* Card */
             '.ns-form-card {',
             'background: var(--ns-surface);',
@@ -1123,8 +1529,29 @@ class NsForm {
 
             '.ns-form-field--wide { grid-column: 1 / -1; }',
 
+            /* Header de grupo (field.group) */
+            '.ns-form-group-header {',
+            'grid-column: 1 / -1;',
+            'font-size: var(--ns-text-xs);',
+            'font-weight: 600;',
+            'text-transform: uppercase;',
+            'letter-spacing: .04em;',
+            'color: var(--ns-text-3);',
+            'padding-top: 14px;',
+            'margin-top: 2px;',
+            'border-top: 1px solid var(--ns-border);',
+            '}',
+
+            '.ns-form-group-header--first {',
+            'border-top: none;',
+            'padding-top: 0;',
+            'margin-top: 0;',
+            '}',
+
             /* Campo */
             '.ns-form-field { display: flex; flex-direction: column; gap: 5px; }',
+
+            '.ns-form-label-row { display: flex; align-items: center; }',
 
             '.ns-form-label {',
             'font-size: var(--ns-text-sm);',
@@ -1139,6 +1566,32 @@ class NsForm {
             'color: var(--ns-text-3);',
             'margin-top: -2px;',
             '}',
+
+            /* Hint em modo popover (hintStyle: 'tooltip', ver cabeçalho da classe) */
+            '.ns-form-hint-wrap { position: relative; display: inline-flex; margin-left: 6px; }',
+
+            '.ns-form-hint-trigger {',
+            'display: inline-flex; align-items: center; justify-content: center;',
+            'width: 15px; height: 15px; padding: 0; flex-shrink: 0;',
+            'border-radius: 50%; border: 1px solid var(--ns-border-2);',
+            'background: var(--ns-bg); color: var(--ns-text-3);',
+            'font-family: var(--ns-font); font-size: 10px; font-weight: 700; line-height: 1;',
+            'cursor: pointer; transition: border-color .12s, color .12s;',
+            '}',
+            '.ns-form-hint-trigger:hover, .ns-form-hint-trigger:focus-visible {',
+            'border-color: var(--ns-accent); color: var(--ns-accent); outline: none;',
+            '}',
+
+            '.ns-form-hint-popover {',
+            'display: none;',
+            'position: absolute; top: 100%; left: 0; margin-top: 6px; z-index: 20;',
+            'width: max-content; max-width: 240px;',
+            'background: var(--ns-surface); border: 1px solid var(--ns-border);',
+            'border-radius: var(--ns-radius-sm); box-shadow: 0 4px 16px rgba(0,0,0,.14);',
+            'padding: 8px 10px; font-size: var(--ns-text-xs); font-weight: 400;',
+            'color: var(--ns-text-2); line-height: 1.4;',
+            '}',
+            '.ns-form-hint-popover.is-open { display: block; animation: ns-fade-in .12s ease both; }',
 
             '.ns-form-error {',
             'font-size: var(--ns-text-xs);',
@@ -1437,6 +1890,39 @@ class NsForm {
             'background: none;',
             'color: var(--ns-accent);',
             'font-weight: 600;',
+            '}',
+
+            /* Listbox */
+            '.ns-form-listbox { display: flex; flex-direction: column; gap: 6px; }',
+
+            '.ns-form-listbox-search { width: 100%; }',
+
+            '.ns-form-listbox-list {',
+            'border: 1px solid var(--ns-border);',
+            'border-radius: var(--ns-radius-sm);',
+            'background: var(--ns-bg);',
+            'max-height: 220px;',
+            'overflow-y: auto;',
+            '}',
+
+            '.ns-form-listbox-option {',
+            'display: flex;',
+            'align-items: center;',
+            'gap: 8px;',
+            'padding: 8px 12px;',
+            'font-size: var(--ns-text-sm);',
+            'color: var(--ns-text-1);',
+            'cursor: pointer;',
+            '}',
+
+            '.ns-form-listbox-option:hover { background: var(--ns-surface); }',
+
+            '.ns-form-listbox-option input { cursor: pointer; flex-shrink: 0; }',
+
+            '.ns-form-listbox-empty {',
+            'padding: 10px 14px;',
+            'font-size: var(--ns-text-sm);',
+            'color: var(--ns-text-3);',
             '}',
 
             /* Footer */

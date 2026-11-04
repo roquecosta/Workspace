@@ -1,5 +1,6 @@
 {
   "permissions": {
+    "defaultMode": "auto",
     "allow": [
       "Skill(spec-standards)",
       "Skill(manifest-standards)",

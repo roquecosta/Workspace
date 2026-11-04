@@ -8,3 +8,4 @@
 - [Projeto GrupoFF/pd_mvd_mirror_vendor](project_pd_mvd_mirror_vendor.md) — duplica feature de pd_t4l; script de manutenção sem lastro no TECH-SPEC usa marcador ‡ dedicado (não reusar †)
 - [Projeto GrupoFF/pd_fcf_fill_cnab_fields](project_pd_fcf_fill_cnab_fields.md) — MANIFEST de SPEC reverso; pd-t4l-cnab.js† nunca implementado, feature real nasceu aqui; 3 divergências pd_t4l sinalizadas
 - [Projeto Drivetech/dm_ppc ProjectPriceComposition](project_dm_ppc_drivetech.md) — camadas filhas por record, limite 40 chars, ref. cruzada c/ PIS, 2 records AUXILIAR globais; customlist novo p/ campo List/Record sem lista reaproveitável
+- [Projeto Aloia/pd_pdf_transaction Credit Memo (DEV-845)](project_pd_pdf_transaction_aloia.md) — 1º MANIFEST do módulo legado, só feature nova; footnote "a confirmar" própria por motivo, campo sem lastro vira pendência de SDF (nunca assumida)

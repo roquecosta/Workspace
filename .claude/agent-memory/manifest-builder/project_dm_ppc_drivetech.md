@@ -136,3 +136,21 @@ logo após o campo de vínculo à Proposta nas tabelas das 9 camadas (ordem: cha
 demais campos, por convenção já usada no projeto). Checar sempre o limite de 40 chars (ver nota
 acima) — `custrecord_pd_ppc_<camada>_grupo`* ficou entre 25–26 chars para todas as 9 camadas, bem
 dentro do limite mesmo nas camadas com nome de record mais longo.
+
+**10ª camada de custo fechada em 2026-11-05: OT (Outros), layerKey `OT`, cadastrada como
+subagente do solution-architect (modo colaborativo/paralelo).** Estrutura aprovada pelo usuário:
+idêntica a SC/DP/FD (Proposta, Grupo CPV, Descrição, Valor — sem Código ERP, sem ICMS/IPI por
+linha, sem Prazo de Entrega, sem Total separado). `customrecord_pd_ppc_ot`* inserido no MANIFEST
+logo após a subseção de FD e antes de `customrecord_pd_ppc_grupo`*. Com isso o projeto passou de
+9 para 10 camadas de custo — todas as menções textuais a "9 camadas"/"nona e última camada" (FD)
+foram corrigidas para "10 camadas"/"nona camada" (sem "última"), incluindo a subseção
+`customrecord_pd_ppc_grupo`* (texto "adicionado às N camadas... subseções mp a X") e o cabeçalho
+do header da Proposta (contagem de records ligados: 11→12). Motivo de negócio (linhas de
+importação de orçamento sem mapeamento de Subgrupo) ficou só no TECH-SPEC, não no manifest.
+**Why:** usuário aprovou a 10ª camada durante atualização de design já validada; a estrutura
+simples (igual SC/DP/FD) foi decisão explícita, não inferência.
+**How to apply:** se uma 11ª camada for aprovada no futuro, repetir o mesmo processo de busca por
+menções textuais de contagem de camadas espalhadas pelo manifest (subseção Proposta, subseção
+Grupo CPV, qualquer subseção de camada que se autodenomine "última") — não assumir que só a
+contagem numérica simples baste; o manifest deste projeto tem múltiplos pontos de contagem textual
+que precisam ficar em sincronia manualmente (não há campo derivado automático).

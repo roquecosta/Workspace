@@ -193,6 +193,17 @@ preservar o timbrado.
 Carregue:
 - `@.claude/skills/client-doc-generator/SKILL.md`
 
+### Onboarding de cliente no fluxo GitHub → NetSuite (gitflow-onboarding)
+
+Gatilho: o usuário pede para colocar um cliente no deploy automático ("instala o git flow", "onboarding
+do CI/CD", "alinha a main com produção"). Conduz as precauções antes de ligar o pipeline: inventário
+da produção via SuiteCloud CLI, comparação com a `main`, dev em andamento → branches, alinhamento
+`main` = produção, escopo do `deploy.xml`, proteção da `main` e só então o workflow descrito em
+`CI CD GitHub → NetSuite (Produção).md`. Só leitura contra produção — nunca deploya.
+
+Carregue:
+- `@.claude/skills/gitflow-onboarding/SKILL.md`
+
 
 ## Contexto do workspace
 

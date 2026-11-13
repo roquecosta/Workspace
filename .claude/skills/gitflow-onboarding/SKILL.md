@@ -50,9 +50,12 @@ branch tipo/idcard ──► PR ──► aprovação ──► merge na main �
 - **Nenhum deploy direto em produção**, salvo **hotfix emergencial** — e todo hotfix volta para a
   `main` por PR no mesmo dia (ver Fase 9).
 - Branches seguem a skill **`git-branching`** (`tipo/idcard`, sempre a partir da `main`).
-- A configuração do NetSuite + GitHub Actions (certificado, M2M, secrets, workflow) está documentada em
-  **`CI CD GitHub → NetSuite (Produção).md`** na raiz do workspace Dome. Esta skill **não duplica** esse
-  doc: ela cuida de tudo que precisa ser verdade **antes** de ligá-lo.
+- A configuração do NetSuite + GitHub Actions (certificado, M2M, secrets, workflow) está documentada no
+  asset **[`assets/ci-cd-github-netsuite.md`](assets/ci-cd-github-netsuite.md)** desta skill. **Leia-o
+  inteiro na Fase 8** — é a referência para conduzir o dev na configuração (ver Fase 8). Não duplique o
+  conteúdo aqui: se o procedimento mudar, atualize o asset.
+- A skill `deploy` (e a `deploy-prod`, se existir) orienta o agente a **fazer** deploy; não se aplica ao
+  onboarding, que só **configura** o pipeline.
 
 > **Por que tanta precaução:** o workflow roda `project:deploy` a **cada push na main** e envia
 > **tudo** que o `deploy.xml` referencia. Se a `main` tiver código que não está em produção, o primeiro
@@ -116,6 +119,7 @@ Verifique e reporte em checklist (✅ / ❌ / ⚠️):
 | Código compilado (TypeScript etc.) | `tsconfig.json`, `outDir` apontando para `src/FileCabinet` | Ver Fase 7 — decidir se o build roda no CI ou o output é versionado |
 | Segredos versionados | `git ls-files | grep -Ei '\.pem$|\.key$|project\.json|\.env'` | Remover do índice + `.gitignore`; se vazou, rotacionar |
 | Hook de upload automático (`file:upload` a cada save) | `.claude/settings*.json`, `.vscode/` | Desligar ou restringir a sandbox — no modelo novo, prod só via CI |
+| Plano do GitHub permite proteger repo privado | `gh api orgs/<org> --jq .plan.name` | `free` → **sem** branch protection, rulesets e required reviewers em repo privado (HTTP 403/422). Levar ao usuário já na Fase 0: upgrade de plano ou proteção alternativa (Fase 8) |
 | Java compatível com o SuiteCloud CLI | `java -version` | Nesta máquina, JDK 25 quebra o CLI: setar `JAVA_HOME` para JDK 21 por comando |
 
 ---
@@ -358,20 +362,59 @@ git worktree remove ../<cliente>-prod-snapshot
 
 ## Fase 8 — Proteção da main e instalação do workflow
 
+Leia o asset **[`assets/ci-cd-github-netsuite.md`](assets/ci-cd-github-netsuite.md)** antes de começar.
+Divisão de trabalho:
+
+| Quem | O quê | Passos do asset |
+| --- | --- | --- |
+| **Dev** (com orientação do agente, passo a passo) | Features no NetSuite, usuário/role, gerar certificado RSA, registrar M2M e copiar o Certificate ID, cadastrar os 4 secrets no GitHub | 1 a 4 |
+| **Agente** (com OK do usuário) | Branch protection, environment `production`, arquivo do workflow em branch + PR | 5 + itens abaixo |
+
+Ao instruir o dev: mostre um passo por vez, cite os alertas do asset (certificado **RSA**, Certificate ID ≠
+conteúdo do `.pem`, chave privada em **base64 numa linha**, passkey **só hex**) e peça confirmação antes
+do próximo. **O agente nunca recebe, gera nem manipula a chave privada nem os valores dos secrets** — o dev
+os cadastra direto no GitHub. Para conferir, use `gh secret list` (mostra só os nomes).
+
 Antes de mergear o workflow:
 
-1. **Branch protection na `main`** (Settings → Branches / Rulesets): exigir PR, ≥ 1 aprovação, bloquear
-   push direto e force push, exigir branch atualizada. Incluir admins.
-2. **Environment `production`** com **Required reviewers** (o workflow do doc já usa
-   `environment: production`).
+1. **Branch protection na `main`**: exigir PR, ≥ 1 aprovação, bloquear push direto e force push, exigir
+   branch atualizada. Incluir admins. Via `gh api -X PUT repos/<org>/<repo>/branches/main/protection`,
+   com OK do usuário (exige admin no repo).
+2. **Environment `production`** com **Required reviewers** (o workflow do asset já usa
+   `environment: production`). Via `gh api -X PUT repos/<org>/<repo>/environments/production`.
 3. **Recomendado:** workflow de PR (`validate-pr.yml`, `on: pull_request`) que só roda
    `project:validate --server` — falha de validação aparece no PR, não no deploy.
-4. Configuração NetSuite + secrets + `deploy-prod.yml`: seguir **`CI CD GitHub → NetSuite (Produção).md`**
-   (passos 1 a 5). Ajustar `working-directory` e build conforme a Fase 7; checkout **sem** submódulos.
+   **Plano Free (sem 1 e 2):** adote a trava no próprio workflow — um step, **antes** de escrever a chave
+   e autenticar, que só deixa o deploy seguir se o commit da `main` veio de PR mergeado **e aprovado**
+   (push direto ou PR sem aprovação → job falha sem deployar). Precisa de
+   `permissions: { contents: read, pull-requests: read }` no job:
+
+   ```yaml
+   - name: Guard - commit precisa vir de PR aprovado
+     shell: bash
+     env:
+       GH_TOKEN: ${{ github.token }}
+     run: |
+       pr=$(gh api "repos/${{ github.repository }}/commits/${{ github.sha }}/pulls" \
+         --jq '[.[] | select(.merged_at != null and .base.ref == "main")][0].number // empty')
+       [ -n "$pr" ] || { echo "::error::Commit não veio de PR mergeado na main. Deploy bloqueado."; exit 1; }
+       ok=$(gh api "repos/${{ github.repository }}/pulls/$pr/reviews" --jq '[.[] | select(.state=="APPROVED")] | length')
+       [ "$ok" -ge 1 ] || { echo "::error::PR #$pr mergeado sem aprovação. Deploy bloqueado."; exit 1; }
+       echo "PR #$pr com $ok aprovação(ões)."
+   ```
+
+   Avise o usuário: o GitHub não deixa o autor aprovar o próprio PR — todo PR (inclusive o do workflow)
+   precisa da aprovação de outra pessoa. Recomende também enxugar quem tem escrita no repo.
+4. `deploy-prod.yml`: copiar do passo 5 do asset (+ trava acima no plano Free). Ajustar `working-directory` e build conforme a Fase 7;
+   checkout **sem** submódulos. Os secrets (`gh secret list`) precisam existir antes do merge.
 5. **Lembrete da expiração do certificado** (o doc gera com `-days 365`): criar card/lembrete ~30 dias
    antes, senão o deploy para de funcionar sem aviso.
 6. O PR que adiciona o workflow é o **primeiro deploy**. Como a `main` == produção, ele deve ser
    funcionalmente neutro — é o smoke test do pipeline. Acompanhe o run e confirme sucesso.
+   **Entre a Fase 6 e o primeiro deploy, nada além do workflow entra na `main`.** Se algum PR de dev for
+   mergeado nesse intervalo, o primeiro deploy deixa de ser neutro: liste o diff
+   (`git diff prod-baseline-AAAAMMDD main -- src/FileCabinet`), avalie o risco com o usuário e registre no
+   PR do workflow o que vai junto.
 
 ---
 

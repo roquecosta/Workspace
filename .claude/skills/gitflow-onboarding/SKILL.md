@@ -384,9 +384,11 @@ Antes de mergear o workflow:
    `environment: production`). Via `gh api -X PUT repos/<org>/<repo>/environments/production`.
 3. **Recomendado:** workflow de PR (`validate-pr.yml`, `on: pull_request`) que só roda
    `project:validate --server` — falha de validação aparece no PR, não no deploy.
-   **Plano Free (sem 1 e 2):** adote a trava no próprio workflow — um step, **antes** de escrever a chave
-   e autenticar, que só deixa o deploy seguir se o commit da `main` veio de PR mergeado **e aprovado**
-   (push direto ou PR sem aprovação → job falha sem deployar). Precisa de
+   **Plano Free (sem 1 e 2) — trava opcional, só se o usuário pedir.** O padrão atual (fase de testes) é
+   deployar no merge do PR **sem** exigir aprovação: avise o usuário que, sem proteção nativa, qualquer
+   push na `main` vai para produção. Se ele quiser a trava, adicione ao workflow um step, **antes** de
+   escrever a chave e autenticar, que só deixa o deploy seguir se o commit da `main` veio de PR mergeado
+   **e aprovado** (push direto ou PR sem aprovação → job falha sem deployar). Precisa de
    `permissions: { contents: read, pull-requests: read }` no job:
 
    ```yaml
@@ -403,10 +405,16 @@ Antes de mergear o workflow:
        echo "PR #$pr com $ok aprovação(ões)."
    ```
 
-   Avise o usuário: o GitHub não deixa o autor aprovar o próprio PR — todo PR (inclusive o do workflow)
-   precisa da aprovação de outra pessoa. Recomende também enxugar quem tem escrita no repo.
-4. `deploy-prod.yml`: copiar do passo 5 do asset (+ trava acima no plano Free). Ajustar `working-directory` e build conforme a Fase 7;
-   checkout **sem** submódulos. Os secrets (`gh secret list`) precisam existir antes do merge.
+   Com a trava, avise: o GitHub não deixa o autor aprovar o próprio PR — todo PR (inclusive o do
+   workflow) precisa da aprovação de outra pessoa. Recomende também enxugar quem tem escrita no repo.
+4. **`deploy-prod.yml`: o workflow instalado é SEMPRE o do asset
+   [`assets/deploy-prod.yml`](assets/deploy-prod.yml)** (o mesmo em produção na Drivetech e no GrupoFF).
+   Copie-o **sem alterações** para `.github/workflows/deploy-prod.yml` do cliente, numa branch
+   `chore/<idcard>` + PR — não reescreva a partir do passo 5 do doc. Únicos ajustes permitidos, e só se o
+   cliente exigir: `working-directory` (projeto SDF em subpasta) e step de build (Fase 7). Checkout **sem**
+   submódulos (já é o padrão do asset). Os secrets (`gh secret list`) precisam existir antes do merge.
+   Se o workflow padrão precisar mudar, atualize o asset (e avise que os clientes já instalados não
+   recebem a mudança sozinhos).
 5. **Lembrete da expiração do certificado** (o doc gera com `-days 365`): criar card/lembrete ~30 dias
    antes, senão o deploy para de funcionar sem aviso.
 6. O PR que adiciona o workflow é o **primeiro deploy**. Como a `main` == produção, ele deve ser

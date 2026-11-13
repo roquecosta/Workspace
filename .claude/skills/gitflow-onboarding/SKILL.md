@@ -8,8 +8,9 @@ description: |
   Conduz as precauções ANTES de ligar o pipeline: diagnóstico do projeto SDF, congelamento de
   deploys, inventário da produção via SuiteCloud CLI, comparação arquivo a arquivo com a main,
   transferência de desenvolvimentos em andamento para branches, alinhamento main = produção,
-  restrição de escopo do deploy.xml, proteção da main e só então a instalação do workflow.
-  NÃO faz deploy em produção. NÃO substitui o doc de configuração do CI (só o referencia).
+  restrição do deploy.xml a SOMENTE ARQUIVOS (o pipeline não deploya objetos), proteção da main e
+  só então a instalação do workflow. NÃO faz deploy em produção. NÃO substitui o doc de
+  configuração do CI (só o referencia).
 ---
 
 # gitflow-onboarding — Onboarding de cliente no fluxo GitHub → NetSuite
@@ -24,11 +25,28 @@ branch tipo/idcard ──► PR ──► aprovação ──► merge na main �
                                                                    │
                                      project:validate + project:deploy (SDF, M2M)
                                                                    ▼
-                                                        NetSuite PRODUÇÃO
+                                              NetSuite PRODUÇÃO — só File Cabinet
 ```
 
-- **`main` == produção, sempre.** Tudo que está na `main` está em produção, e vice-versa (dentro do
-  escopo do `deploy.xml`).
+- **O pipeline deploya SOMENTE ARQUIVOS (File Cabinet).** O `deploy.xml` do cliente é fixo e genérico —
+  uma única linha `<path>~/FileCabinet/*</path>` dentro de `<files>`, e nada mais. **Objetos** (scripts,
+  deployments, custom records, campos, listas), configuração de conta e traduções **ficam fora do
+  pipeline** — ver "Objetos fora do pipeline" abaixo.
+- **O escopo é o próprio repositório.** O `deploy.xml` nunca lista pastas ou projetos (seria mais um lugar
+  para manter e não escala em clientes grandes). **Qualquer arquivo que está em `src/FileCabinet/` na
+  `main` vai para o NetSuite.** Por isso, `src/FileCabinet/` só contém o que pode existir no File Cabinet
+  de produção — nada de `.claude/`, memória de agente, rascunhos ou cópias.
+- **Docs dos projetos ficam onde estão.** A pasta `Docs/` (ou `DOCS/`) de cada projeto — `TECH-SPEC.md`,
+  `MANIFEST.md`, documento do cliente — **permanece em `src/FileCabinet/`**, versionada, seguindo a
+  convenção do workspace (os agentes criam e leem os docs ali). Ela sobe para produção pelo CI, o que é
+  aceito: não afeta comportamento. **Nunca** ignore `*.md` no `.gitignore` — os docs novos que os agentes
+  criam em `Docs/` sumiriam do git em silêncio.
+- **`main` == espelho do File Cabinet de produção, sempre.** Todo arquivo em `src/FileCabinet/` da `main`
+  está em produção com o mesmo conteúdo, e vice-versa (dentro das pastas que o repo gerencia).
+- **Submódulos (ex.: `pd_c_netsuite_tools`) não sobem pelo CI.** O checkout do workflow é feito **sem**
+  submódulos, então a pasta do submódulo chega vazia e nada dela é deployado — o que é aceitável. Se o
+  `pd_c_netsuite_tools` (ou outra lib) existir como **pasta comum** versionada dentro de
+  `src/FileCabinet/`, ele sobe como qualquer outro arquivo.
 - **Nenhum deploy direto em produção**, salvo **hotfix emergencial** — e todo hotfix volta para a
   `main` por PR no mesmo dia (ver Fase 9).
 - Branches seguem a skill **`git-branching`** (`tipo/idcard`, sempre a partir da `main`).
@@ -41,12 +59,31 @@ branch tipo/idcard ──► PR ──► aprovação ──► merge na main �
 > merge publica esse código. Se a produção tiver hotfix que não está na `main`, o primeiro merge o
 > **sobrescreve**. E o SDF **não apaga** nada: arquivo removido do repo continua em produção.
 
+### Objetos fora do pipeline
+
+Por que só arquivos: o deploy de objeto **sobrescreve a definição inteira** em produção (deployments
+alterados pela UI — status, log level, audience, parâmetros — seriam perdidos a cada merge), e um erro de
+objeto derruba o deploy de todos os arquivos. Mantendo o pipeline só com arquivos, o risco de cada merge
+fica restrito a código.
+
+Consequências que valem para todo cliente no fluxo:
+
+- `src/Objects/` **continua versionado** no repo, como referência/catálogo (fonte para o `sdf-generator`
+  e para deploy manual), mas **não é publicado pelo CI** e **não faz parte do critério main == produção**.
+- **Objeto novo ou alterado vai para produção manualmente**, pelo `suitescript-dev` com a skill `deploy`
+  (`project:deploy` com um `deploy.xml` temporário só com os objetos do card, contra a conta de produção
+  confirmada) ou pela UI — **antes** do merge do código que depende dele. Script novo: o objeto
+  `customscript` precisa existir em prod apontando para o arquivo; registre a ordem no PR
+  ("objeto X deployado manualmente em AAAA-MM-DD").
+- Arquivo novo cujo script ainda não existe em prod é deployado pelo CI normalmente (fica só no File
+  Cabinet, sem rodar) — não quebra nada, mas o card só está pronto quando o objeto também estiver.
+
 ---
 
 ## Regras invioláveis
 
 1. **Nunca deployar em produção** durante o onboarding. Contra produção, só comandos de **leitura**:
-   `file:list`, `file:import`, `object:list`, `object:import`, `project:validate --server`.
+   `file:list`, `file:import`, `object:list`, `project:validate --server`.
 2. **Confirme a conta antes de qualquer comando contra o NetSuite.** Pergunte qual instância/authid de
    produção usar, mostre `suitecloud account:manageauth --list` e o `defaultAuthId` do `project.json`.
    Siga a skill **`deploy`** para as regras de conta.
@@ -74,7 +111,8 @@ Verifique e reporte em checklist (✅ / ❌ / ⚠️):
 | `project.json` com authid de **produção** do cliente | `project.json` + `account:manageauth --list` | `suitecloud account:setup` (interativo, local) |
 | `main` local = `origin/main`, sem mudanças pendentes | `git fetch && git status` | Resolver antes (commit em branch, stash, etc.) |
 | Branches abertas | `git branch -a --no-merged main` | Listar — entram no relatório (Fase 4) |
-| Submódulos (ex.: `pd_c_netsuite_tools`, `Framework`) | `.gitmodules`, `git submodule status` | Ver Fase 7 — o CI precisa fazer checkout deles |
+| Submódulos (ex.: `pd_c_netsuite_tools`, `Framework`) | `.gitmodules`, `git submodule status` | Só registrar — o CI faz checkout **sem** submódulos, então eles não sobem (ver "O modelo-alvo") |
+| Lixo dentro de `src/FileCabinet/` (`.claude/`, `agent-memory`, rascunhos, `_old`) | `git ls-files src/FileCabinet \| grep -Ei '/\.claude/\|_old\|copy\|backup'` | Listar — tudo em `src/FileCabinet/` sobe para prod; mover para fora de `src/` na Fase 7. `Docs/`/`DOCS/` dos projetos **não** é lixo (ver "O modelo-alvo") |
 | Código compilado (TypeScript etc.) | `tsconfig.json`, `outDir` apontando para `src/FileCabinet` | Ver Fase 7 — decidir se o build roda no CI ou o output é versionado |
 | Segredos versionados | `git ls-files | grep -Ei '\.pem$|\.key$|project\.json|\.env'` | Remover do índice + `.gitignore`; se vazou, rotacionar |
 | Hook de upload automático (`file:upload` a cada save) | `.claude/settings*.json`, `.vscode/` | Desligar ou restringir a sandbox — no modelo novo, prod só via CI |
@@ -100,10 +138,15 @@ Verifique e reporte em checklist (✅ / ❌ / ⚠️):
 
 ### 2.1 Definir o escopo
 
-Pergunte e registre **quais pastas do File Cabinet são da Dome** (ex.: `/SuiteScripts/project_dome`). O
-CI só deve gerenciar esse escopo — pastas de outros fornecedores, bundles e arquivos do cliente ficam fora.
-O mesmo vale para objetos: quais prefixos de scriptid são da Dome (ex.: `customscript_pd_`,
-`customrecord_pd_`).
+O escopo **não é configurado no `deploy.xml`** — é o que o repo contém em `src/FileCabinet/`. Nesta fase,
+levante e confirme com o usuário **quais pastas do File Cabinet de produção são da Dome** (ex.:
+`/SuiteScripts/ProjectDome`) e garanta que o repo as espelhe. Pastas de outros fornecedores, bundles e
+arquivos do cliente **não** devem existir em `src/FileCabinet/` — se existirem, viram decisão na Fase 4
+(sair do repo). Objetos não entram no escopo (ver "Objetos fora do pipeline").
+
+Submódulos (ex.: `pd_c_netsuite_tools`) ficam **fora do inventário e da comparação**: o CI não os
+deploya. Só entra no escopo uma lib que esteja versionada como **pasta comum** dentro de
+`src/FileCabinet/`.
 
 > Atenção ao caso IRON: o layout no NetSuite pode não bater com a estrutura do repo (scripts legados soltos
 > na raiz de `/SuiteScripts`, etc.). **O repo tem que espelhar o caminho do NetSuite**, senão o deploy cria
@@ -119,10 +162,17 @@ git worktree add ../<cliente>-prod-snapshot main
 cp project.json ../<cliente>-prod-snapshot/          # project.json é ignorado pelo git
 cd ../<cliente>-prod-snapshot
 # limpar o escopo no worktree para que o import reflita SÓ o que existe em produção
+# (o worktree não inicializa submódulos, então a pasta deles já está vazia e fica fora do diff)
 rm -rf "src/FileCabinet/SuiteScripts/<escopo>"
 ```
 
-Liste e importe os arquivos de produção do escopo (comandos de leitura):
+Ao importar, **pule as pastas de submódulo** (ex.: `.../pd_c_netsuite_tools/`) — elas não fazem parte
+da comparação.
+
+Liste e importe os arquivos de produção do escopo (comandos de leitura). O `file:list`/`file:import` **não
+aceitam `--authid`**: a conta vem do `project.json` do diretório atual. Grave o authid de produção no
+`project.json` **do worktree** e rode os comandos **só de dentro dele**, conferindo o authid antes de cada
+chamada — rodar do repo de trabalho consulta a conta errada (normalmente o sandbox):
 
 ```powershell
 suitecloud file:list --folder "/SuiteScripts/<escopo>"
@@ -133,18 +183,15 @@ suitecloud file:import --paths "/SuiteScripts/<escopo>/a.js" "/SuiteScripts/<esc
 Confira se o `file:list` trouxe as subpastas; se não, itere por subpasta. Confirme ao final que a contagem
 de arquivos importados = contagem listada.
 
-### 2.3 Objetos
+### 2.3 Objetos — fora do inventário
 
-Arquivos não são tudo: o `deploy.xml` também envia `~/Objects/*`, e o deploy **sobrescreve** a definição
-do objeto em produção. Admins costumam alterar script deployments pela UI (status, log level, audience,
-parâmetros) — essas alterações seriam perdidas no primeiro deploy.
+Como o pipeline não deploya objetos, **não há import nem comparação de objetos** no onboarding: o
+`src/Objects/` do repo não precisa bater com produção. Não rode `object:import` no worktree.
 
-```powershell
-suitecloud object:list --type customscript                 # e customrecordtype, customlist, etc.
-suitecloud object:import --type ALL --scriptid <ids do escopo> --destinationfolder "/Objects" --excludefiles
-```
-
-Importe para o mesmo worktree os objetos do escopo que existem em produção.
+Apenas uma checagem de sanidade (leitura): `suitecloud object:list --type customscript` e confirme que os
+scripts da Dome em produção apontam para arquivos **dentro do escopo** de pastas. Script cujo arquivo está
+fora do escopo (ex.: legado solto na raiz de `/SuiteScripts`) → anote no relatório: o código dele não será
+gerenciado pelo CI até ser movido (movimentação é manual e fora do onboarding).
 
 ---
 
@@ -153,14 +200,22 @@ Importe para o mesmo worktree os objetos do escopo que existem em produção.
 No worktree, o `git status` já é o diff produção × main:
 
 ```bash
-git -c core.autocrlf=false status --porcelain -- src/
-git diff --ignore-cr-at-eol --stat -- src/
+git -c core.autocrlf=false status --porcelain -- src/FileCabinet/
+git diff --ignore-cr-at-eol --stat -- src/FileCabinet/
 ```
 
 - **CRLF/BOM geram falso positivo.** Compare sempre ignorando fim de linha; um arquivo que só difere em
   `\r` conta como **igual** (e anote para resolver com `.gitattributes` na Fase 7).
-- **XML de objeto exportado** pode diferir só em ordem/formatação. Leia o diff e julgue se a diferença é
-  semântica antes de classificar.
+- Compare **só `src/FileCabinet/`** (escopo). Diferenças em `src/Objects/` não entram na classificação.
+- **Docs (`Docs/`/`DOCS/`) não entram no critério de igualdade.** A versão do repo é a canônica: doc
+  divergente ou só na `main` fica como está (o primeiro deploy do CI o publica); doc só em produção vira
+  item de exclusão manual. Não copie docs de produção para a `main`.
+- Caminhos com espaço (ex.: `Log Entrada/`) vêm entre aspas no `--porcelain`: itere com
+  `status --porcelain -z` para não classificar errado.
+- **Antes de marcar um arquivo "só em produção" como morto**, procure referência por **internal ID**, não
+  só por nome/caminho: `grep -rnE "file\.load\(|id:\s*[0-9]{4,}"`. Assets (imagens, templates) costumam ser
+  carregados por ID fixo — se o arquivo for apagado em prod, o código quebra. Na dúvida, importe para a
+  `main` (o deploy SDF atualiza no mesmo caminho e preserva o internal ID).
 
 ### Classificação
 
@@ -206,7 +261,7 @@ Apresente uma tabela única e **peça a decisão do usuário por linha**. Defaul
 | Só em produção, fora do padrão (lixo, `_old`, cópias) | Arquivo morto | Decidir: importar ou excluir de prod (exclusão é manual, depois do onboarding) |
 | Só na main, ligado a card ativo | Dev não deployado | **Mover para branch** do card; sai da main |
 | Só na main, sem card / abandonado | Código morto | Remover da main (fica na tag de backup) |
-| Objeto divergente (deployment/record) | Mudança via UI ou dev pendente | Mesmo critério: prod é a verdade na main; dev vai para branch |
+| Script em prod com arquivo fora do escopo de pastas | Legado / layout divergente | Anotar; fica fora do CI até ser movido manualmente |
 | Branch aberta já existente | — | Listar; o dono faz rebase/merge da main alinhada depois |
 
 Inclua no relatório: escopo definido, data do snapshot, contagens por categoria, e a lista de
@@ -244,7 +299,7 @@ silêncio (armadilha do revert). Em vez disso:
 ## Fase 6 — Re-verificação (gate)
 
 Repita a Fase 2/3 contra a `main` atualizada (novo worktree ou `git pull` no existente + novo import).
-Critério de aceite: **zero diferença** no escopo (ignorando fim de linha). Também rode, contra produção:
+Critério de aceite: **zero diferença** no escopo (ignorando fim de linha e as pastas `Docs/`/`DOCS/`). Também rode, contra produção:
 
 ```powershell
 suitecloud project:validate --server
@@ -263,14 +318,37 @@ git worktree remove ../<cliente>-prod-snapshot
 
 ## Fase 7 — Higiene do repositório para o CI
 
-- **`deploy.xml` restrito ao escopo.** Troque `~/FileCabinet/*` pelas pastas da Dome
-  (ex.: `~/FileCabinet/SuiteScripts/project_dome/*`) e `~/Objects/*` pelos objetos do escopo. **Remova
-  `<configuration>` (`~/AccountConfiguration/*`)** — o CI não deve alterar features da conta — e
-  `<translationimports>` se não houver uso.
+- **`deploy.xml` padrão — idêntico em todo cliente.** Mostre ao usuário o `deploy.xml` atual e
+  **proponha** esta versão como diff (aplicar só após OK, na branch de alinhamento ou numa
+  `chore/<idcard>` própria):
+
+  ```xml
+  <deploy>
+      <files>
+          <path>~/FileCabinet/*</path>
+      </files>
+  </deploy>
+  ```
+
+  Regras:
+  - **Só `<files>` com `~/FileCabinet/*`.** Não liste pastas, projetos nem objetos — o `deploy.xml` não
+    muda quando projetos novos são criados. O que controla o que sobe é o conteúdo de `src/FileCabinet/`.
+  - **Remover `<objects>` inteiro** (objetos vão para prod manualmente — ver "Objetos fora do pipeline"),
+    **`<configuration>`** (o CI não altera features da conta) e **`<translationimports>`**.
+  - O `manifest.xml` pode manter as dependências de features/objetos: elas só são **verificadas** na conta,
+    não deployadas.
+- **Limpar `src/FileCabinet/`.** Como tudo ali sobe, **mova para fora de `src/`** tudo que não deve
+  existir no File Cabinet de produção: `.claude/` e `agent-memory` (→ `.claude/agent-memory/` na raiz do
+  repo, mesclando o `MEMORY.md`), rascunhos e cópias. **`Docs/`/`DOCS/` dos projetos ficam onde estão.**
+  Faça isso na branch de alinhamento e confira no `project:validate --server` (lista de arquivos) que nada
+  disso aparece. Para evitar reincidência, adicione ao `.gitignore` **da raiz** a linha
+  `src/FileCabinet/**/.claude/`. **Não** crie `.gitignore` dentro de `src/FileCabinet/` (ele mesmo seria
+  deployado) e **não** ignore `*.md`.
 - **Exclusões não propagam.** O SDF não apaga em produção o que sai do repo. Combine que remoção de
-  arquivo/objeto é feita manualmente em prod, registrada no PR que remove do repo.
-- **Submódulos:** se houver, o `actions/checkout` do workflow precisa de `submodules: recursive` e, se o
-  submódulo for privado, um token com acesso (o `GITHUB_TOKEN` padrão não lê outros repos privados).
+  arquivo é feita manualmente em prod, registrada no PR que remove do repo.
+- **Submódulos:** o `actions/checkout` do workflow fica **sem** `submodules` (padrão) — a pasta do
+  submódulo chega vazia e nada dela é deployado, sem precisar de token extra. Não adicione
+  `submodules: recursive`. Atualização de lib compartilhada em produção continua manual.
 - **Build:** se há TypeScript compilado para `src/FileCabinet`, decida: build no CI (adicionar step) ou
   output versionado (e conferido no PR). Não deixe ambíguo.
 - **`.gitattributes`** fixando fim de linha (ex.: `* text=auto eol=lf`) para acabar com falso diff.
@@ -289,7 +367,7 @@ Antes de mergear o workflow:
 3. **Recomendado:** workflow de PR (`validate-pr.yml`, `on: pull_request`) que só roda
    `project:validate --server` — falha de validação aparece no PR, não no deploy.
 4. Configuração NetSuite + secrets + `deploy-prod.yml`: seguir **`CI CD GitHub → NetSuite (Produção).md`**
-   (passos 1 a 5). Ajustar `working-directory`, `submodules` e build conforme a Fase 7.
+   (passos 1 a 5). Ajustar `working-directory` e build conforme a Fase 7; checkout **sem** submódulos.
 5. **Lembrete da expiração do certificado** (o doc gera com `-days 365`): criar card/lembrete ~30 dias
    antes, senão o deploy para de funcionar sem aviso.
 6. O PR que adiciona o workflow é o **primeiro deploy**. Como a `main` == produção, ele deve ser
@@ -308,12 +386,15 @@ Registre e comunique ao time e ao cliente:
   exatamente o mesmo conteúdo e PR para a `main`. Hotfix sem backport é **apagado pelo próximo deploy**.
 - **Ninguém mais edita o escopo em produção** — inclusive time interno do cliente e outros fornecedores.
   Se possível, restringir permissão de File Cabinet nas pastas do escopo.
-- **Mudanças de objeto pela UI** (deployments, campos) também precisam voltar para o repo, pelo mesmo
-  motivo do hotfix.
+- **Objetos (scripts, deployments, records, campos, listas) não passam pelo pipeline.** Vão para produção
+  manualmente (skill `deploy` ou UI), **antes** do merge do código que depende deles, e o PR registra o
+  que foi feito. Mudanças de objeto pela UI não são sobrescritas pelo CI; manter `src/Objects/` atualizado
+  é recomendado (catálogo), mas não é o que define produção.
 
-Entregue ao final um resumo com: escopo, baseline (tag), branches criadas, decisões tomadas por arquivo,
-pendências (exclusões manuais em prod, donos de branches antigas a avisar, data de expiração do
-certificado).
+Entregue ao final um resumo com: escopo (pastas da Dome espelhadas em `src/FileCabinet/`), baseline (tag), branches criadas, decisões
+tomadas por arquivo, pendências (exclusões manuais em prod, scripts com arquivo fora do escopo, donos de
+branches antigas a avisar, data de expiração do certificado) e o lembrete de que objetos seguem fora do
+pipeline.
 
 ---
 
@@ -323,5 +404,6 @@ certificado).
 - Não descarta código sem decisão do usuário; tudo fica na tag de backup.
 - Não reescreve histórico da `main` nem faz force push.
 - Não mergeia o workflow antes da re-verificação com zero diferença e da proteção da `main`.
+- Não coloca objetos, configuração de conta, traduções nem listas de pastas no `deploy.xml` do pipeline — só `<files>` com `~/FileCabinet/*`.
 - Não cria branch sem card do ClickUp.
 - Não edita `TECH-SPEC.md` nem `MANIFEST.md`.

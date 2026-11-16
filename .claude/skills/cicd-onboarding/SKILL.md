@@ -1,9 +1,9 @@
 ---
-name: "gitflow-onboarding"
+name: "cicd-onboarding"
 description: |
   Use esta skill quando o usuário pedir para fazer o onboarding de um cliente no fluxo
   GitHub → NetSuite (deploy de produção por GitHub Actions a partir da main), ou seja, para
-  "instalar o git flow", "colocar o cliente no CI/CD", "alinhar a main com produção",
+  "colocar o cliente no CI/CD", "instalar o CI/CD", "instalar o git flow", "alinhar a main com produção",
   "preparar o repositório para deploy automático" ou "verificar se a main está igual à produção".
   Conduz as precauções ANTES de ligar o pipeline: diagnóstico do projeto SDF, congelamento de
   deploys, inventário da produção via SuiteCloud CLI, comparação arquivo a arquivo com a main,
@@ -13,7 +13,7 @@ description: |
   configuração do CI (só o referencia).
 ---
 
-# gitflow-onboarding — Onboarding de cliente no fluxo GitHub → NetSuite
+# cicd-onboarding — Onboarding de cliente no fluxo GitHub → NetSuite
 
 Você está preparando o repositório de um cliente da **Dome** para o modelo em que **a `main` é a
 produção**. Sempre responda em **português brasileiro**.
@@ -54,7 +54,7 @@ branch tipo/idcard ──► PR ──► aprovação ──► merge na main �
   asset **[`assets/ci-cd-github-netsuite.md`](assets/ci-cd-github-netsuite.md)** desta skill. **Leia-o
   inteiro na Fase 8** — é a referência para conduzir o dev na configuração (ver Fase 8). Não duplique o
   conteúdo aqui: se o procedimento mudar, atualize o asset.
-- A skill `deploy` (e a `deploy-prod`, se existir) orienta o agente a **fazer** deploy; não se aplica ao
+- As skills `deploy-manual` e `deploy-prod` orientam o agente a **fazer** deploy; não se aplicam ao
   onboarding, que só **configura** o pipeline.
 
 > **Por que tanta precaução:** o workflow roda `project:deploy` a **cada push na main** e envia
@@ -73,7 +73,7 @@ Consequências que valem para todo cliente no fluxo:
 
 - `src/Objects/` **continua versionado** no repo, como referência/catálogo (fonte para o `sdf-generator`
   e para deploy manual), mas **não é publicado pelo CI** e **não faz parte do critério main == produção**.
-- **Objeto novo ou alterado vai para produção manualmente**, pelo `suitescript-dev` com a skill `deploy`
+- **Objeto novo ou alterado vai para produção manualmente**, pelo `suitescript-dev` com a skill `deploy-manual`
   (`project:deploy` com um `deploy.xml` temporário só com os objetos do card, contra a conta de produção
   confirmada) ou pela UI — **antes** do merge do código que depende dele. Script novo: o objeto
   `customscript` precisa existir em prod apontando para o arquivo; registre a ordem no PR
@@ -89,7 +89,7 @@ Consequências que valem para todo cliente no fluxo:
    `file:list`, `file:import`, `object:list`, `project:validate --server`.
 2. **Confirme a conta antes de qualquer comando contra o NetSuite.** Pergunte qual instância/authid de
    produção usar, mostre `suitecloud account:manageauth --list` e o `defaultAuthId` do `project.json`.
-   Siga a skill **`deploy`** para as regras de conta.
+   Siga a skill **`deploy-manual`** para as regras de conta.
 3. **Nada é descartado sem decisão do usuário.** Todo arquivo divergente é classificado e apresentado; o
    usuário decide o destino de cada um (Fase 4). Antes de mexer na `main`, crie a tag de backup.
 4. **Sem reescrita de histórico.** Nada de `push --force` ou `reset` na `main` remota. O alinhamento entra
@@ -431,14 +431,14 @@ Antes de mergear o workflow:
 Registre e comunique ao time e ao cliente:
 
 - **Fluxo normal:** card → `tipo/idcard` → PR → aprovação → merge → deploy automático.
-- **Sandbox:** desenvolvimento e teste continuam via `file:upload` em sandbox (skill `deploy`). Produção,
+- **Sandbox:** desenvolvimento e teste continuam via `file:upload` em sandbox (skill `deploy-manual`). Produção,
   só pelo pipeline.
 - **Hotfix emergencial:** permitido direto em produção, mas no **mesmo dia** abre-se `fix/<idcard>` com
   exatamente o mesmo conteúdo e PR para a `main`. Hotfix sem backport é **apagado pelo próximo deploy**.
 - **Ninguém mais edita o escopo em produção** — inclusive time interno do cliente e outros fornecedores.
   Se possível, restringir permissão de File Cabinet nas pastas do escopo.
 - **Objetos (scripts, deployments, records, campos, listas) não passam pelo pipeline.** Vão para produção
-  manualmente (skill `deploy` ou UI), **antes** do merge do código que depende deles, e o PR registra o
+  manualmente (skill `deploy-manual` ou UI), **antes** do merge do código que depende deles, e o PR registra o
   que foi feito. Mudanças de objeto pela UI não são sobrescritas pelo CI; manter `src/Objects/` atualizado
   é recomendado (catálogo), mas não é o que define produção.
 

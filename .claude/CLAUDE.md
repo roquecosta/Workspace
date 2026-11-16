@@ -114,7 +114,9 @@ decisões de arquitetura) como fonte vinculante de estrutura. Implemente um recu
 Carregue condicionalmente, apenas quando necessário:
 - **Ao criar/modificar scripts com EntryPoint / UseCase / Model:** skill `usecase-architecture`
 - **Ao criar/modificar Suitelets:** `@Framework/ui/NsSuitelet.js`
-- **Ao fazer deploy (código ou objetos XML) via SuiteCloud CLI:** skill `deploy`
+- **Ao fazer deploy de arquivos para produção em cliente no CI/CD:** skill `deploy-prod` (abre o PR da
+  branch para a `main`; o merge dispara o pipeline)
+- **Ao fazer deploy via SuiteCloud CLI (sandbox, objetos XML ou cliente fora do CI/CD):** skill `deploy-manual`
 
 **No fluxo de atualização:** quando o TECH-SPEC for atualizado e o MANIFEST refletido, o
 `suitescript-dev` lê **o que mudou** (changelog do TECH-SPEC + diff do MANIFEST) e reflete apenas
@@ -128,8 +130,13 @@ faz e **avisa** que aquilo deveria ir para o TECH-SPEC — não bloqueia.
 
 **Deploy:** após modificar arquivos — código ou objetos XML — o deploy pode ser feito pelo
 `suitescript-dev`, **opcional e sob demanda** (só por pedido explícito do usuário). O `suitescript-dev`
-é o **ator** (decide o que e quando) e carrega a skill `deploy` como **runbook** do procedimento SDF
-(seleção/confirmação da conta, validação e comandos do SuiteCloud CLI).
+é o **ator** (decide o que e quando) e escolhe a skill pelo mecanismo:
+
+- **`deploy-prod`** — cliente no CI/CD (`.github/workflows/deploy-prod.yml` na `main`): arquivos vão para
+  produção **só** pelo PR da branch para a `main`. A skill abre o PR e devolve o link; merge é humano.
+- **`deploy-manual`** — runbook do SuiteCloud CLI (seleção/confirmação da conta, validação, comandos):
+  sandbox durante o desenvolvimento, objetos XML em produção (sempre manuais, antes do merge) e
+  produção de cliente que ainda não está no CI/CD.
 
 ---
 
@@ -193,16 +200,16 @@ preservar o timbrado.
 Carregue:
 - `@.claude/skills/client-doc-generator/SKILL.md`
 
-### Onboarding de cliente no fluxo GitHub → NetSuite (gitflow-onboarding)
+### Onboarding de cliente no fluxo GitHub → NetSuite (cicd-onboarding)
 
-Gatilho: o usuário pede para colocar um cliente no deploy automático ("instala o git flow", "onboarding
+Gatilho: o usuário pede para colocar um cliente no deploy automático ("instala o CI/CD", "instala o git flow", "onboarding
 do CI/CD", "alinha a main com produção"). Conduz as precauções antes de ligar o pipeline: inventário
 da produção via SuiteCloud CLI, comparação com a `main`, dev em andamento → branches, alinhamento
 `main` = produção, escopo do `deploy.xml`, proteção da `main` e só então o workflow descrito em
 `CI CD GitHub → NetSuite (Produção).md`. Só leitura contra produção — nunca deploya.
 
 Carregue:
-- `@.claude/skills/gitflow-onboarding/SKILL.md`
+- `@.claude/skills/cicd-onboarding/SKILL.md`
 
 
 ## Contexto do workspace

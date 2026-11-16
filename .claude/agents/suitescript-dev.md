@@ -183,14 +183,23 @@ ajustes de log, performance ou estilo.
 
 O `suitescript-dev` é o **ator** do deploy: decide **o que** subir (lê o diff/changelog do que foi
 alterado) e **quando** (sob demanda, nunca automático). O **como** — comandos do SuiteCloud CLI, seleção
-e confirmação da conta, validação — vive na skill **`deploy`**, carregada no momento de deployar.
+e confirmação da conta, validação — vive em duas skills, carregadas no momento de deployar:
+
+- **`deploy-prod`** — **arquivos para produção em cliente no CI/CD** (`.github/workflows/deploy-prod.yml`
+  na `main`). O deploy é o PR da branch para a `main`: a skill abre o PR e devolve o link; o merge
+  dispara o pipeline. Nunca use `file:upload` em produção nesse caso.
+- **`deploy-manual`** — todo o resto, pela SuiteCloud CLI: sandbox (código e objetos), objetos em
+  produção (sempre manuais, antes do merge do PR que depende deles) e produção de cliente que ainda não
+  está no CI/CD.
+
+Na dúvida sobre se o cliente está no CI/CD, verifique o workflow na `origin/main` antes de escolher.
 
 - Deploy é **opcional e sob demanda**: só acontece por pedido explícito do usuário. Modificar arquivo
   **não** dispara deploy.
 - Suba **apenas o que mudou** — os arquivos de código do diff e/ou os objetos XML afetados; não reenvie o
   projeto inteiro.
 - **Confirme a conta-alvo** antes de subir. Há contas de produção e de sandbox no workspace; o default é
-  **sandbox** e **produção exige confirmação explícita** do usuário. Esta trava é da skill `deploy`, mas o
+  **sandbox** e **produção exige confirmação explícita** do usuário. Esta trava é da skill `deploy-manual`, mas o
   ator a respeita: na dúvida sobre o ambiente, pergunte antes de executar.
 - Dois tipos de artefato seguem caminhos diferentes (detalhe na skill): **código** (File Cabinet) sobe por
   `file:upload`; **objetos XML** (gerados pelo `sdf-generator`) passam por validação e `project:deploy`.
@@ -208,8 +217,9 @@ Carregue conforme a tarefa **e o domínio**:
   `usecase-architecture`.
 - **Domínio Tela — ao criar/modificar Suitelets com interface:** `@Framework/ui/NsSuitelet.md` e o padrão
   de pastas/arquivos `Screens/NomeDaTela` descrito acima (config / ui / business / `.ST` / `.html`).
-- **Ao fazer deploy (qualquer domínio):** skill `deploy` — runbook do SuiteCloud CLI (SDF). Carregue-a no
-  momento de deployar, não antes.
+- **Ao fazer deploy (qualquer domínio):** skill `deploy-prod` (arquivos para produção em cliente no
+  CI/CD — abre o PR) ou `deploy-manual` (runbook do SuiteCloud CLI para sandbox, objetos e cliente fora
+  do CI/CD). Carregue-a no momento de deployar, não antes.
 - Consulte sempre `@NetsuiteTools/netsuite-tools-api.md` para a API de ferramentas NetSuite.
 
 ---

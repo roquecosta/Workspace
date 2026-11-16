@@ -1,15 +1,18 @@
 ---
-name: "deploy"
+name: "deploy-manual"
 description: |
   Use esta skill quando o usuário pedir para fazer deploy / subir / publicar / "mandar pro NetSuite"
-  arquivos ou objetos de um projeto SuiteCloud (SDF) via SuiteCloud CLI. Cobre o procedimento
-  mecânico: identificação e confirmação da conta-alvo (authid), validação prévia, deploy de arquivos
-  de código (file:upload), deploy de objetos XML (project:deploy), deploy parcial só do que mudou,
-  e mapeamento dos erros mais comuns. NÃO decide O QUE nem QUANDO deployar — isso é do ator
+  arquivos ou objetos de um projeto SuiteCloud (SDF) pela máquina do dev, via SuiteCloud CLI: deploy
+  em sandbox durante o desenvolvimento, deploy manual de objetos em produção e deploy de produção em
+  cliente que ainda NÃO está no CI/CD. Cobre o procedimento mecânico: identificação e confirmação da
+  conta-alvo (authid), validação prévia, deploy de arquivos de código (file:upload), deploy de objetos
+  XML (project:deploy), deploy parcial só do que mudou, e mapeamento dos erros mais comuns. Em cliente
+  no CI/CD (deploy-prod.yml na main), arquivos para produção NÃO passam por aqui: vão pela skill
+  `deploy-prod` (PR para a main). NÃO decide O QUE nem QUANDO deployar — isso é do ator
   (suitescript-dev). Esta skill é o runbook que o ator carrega na hora de executar.
 ---
 
-# deploy — Runbook de deploy via SuiteCloud CLI (SDF)
+# deploy-manual — Runbook de deploy via SuiteCloud CLI (SDF)
 
 Você está executando um deploy de um projeto **SuiteCloud Development Framework (SDF)** para uma conta
 NetSuite usando o **SuiteCloud CLI** (`suitecloud`). Sempre responda em **português brasileiro**.
@@ -35,6 +38,34 @@ Regras invioláveis deste runbook:
    deploy específico. "Pode subir" sem dizer o ambiente **não** autoriza produção.
 4. **Valide antes de deployar** (`project:validate`), sempre que houver objetos envolvidos.
 5. Fluxo saudável é **sandbox → produção**: suba e teste no sandbox antes de promover para produção.
+6. **Cliente no CI/CD: arquivos nunca sobem para produção por aqui.** Veja a seção abaixo.
+
+---
+
+## Cliente no CI/CD: o que muda
+
+Antes de qualquer deploy em **produção**, verifique se o cliente está no CI/CD GitHub → NetSuite:
+
+```bash
+git fetch origin
+git ls-tree --name-only origin/main .github/workflows/deploy-prod.yml
+```
+
+Se o arquivo existir, a `main` é a produção e o pipeline publica o File Cabinet a cada merge:
+
+| O que | Ambiente | Caminho |
+| --- | --- | --- |
+| Arquivos de código (File Cabinet) | Sandbox | Esta skill (`file:upload`), normalmente |
+| Arquivos de código (File Cabinet) | Produção | **Não por aqui.** Use a skill `deploy-prod` (PR da branch para a `main`). Um `file:upload` em produção é sobrescrito no próximo merge e quebra o espelho `main` = produção |
+| Objetos XML (`src/Objects/`) | Sandbox | Esta skill (`project:deploy`), normalmente |
+| Objetos XML (`src/Objects/`) | Produção | Esta skill, **com confirmação explícita**, **antes** do merge do PR do código que depende do objeto. Use um `deploy.xml` temporário só com os objetos do card e **não commite** essa alteração: o `deploy.xml` do repo fica só com `~/FileCabinet/*`. Avise o usuário para marcar o checklist de objetos no PR |
+
+Exceção: **hotfix emergencial** em produção pode subir arquivo por aqui, com confirmação explícita. Avise
+que, no mesmo dia, a skill `deploy-prod` precisa abrir o PR de backport (`fix/<idcard>`) com exatamente o
+mesmo conteúdo, ou o próximo merge apaga o hotfix.
+
+Se o arquivo não existir, o cliente ainda não está no CI/CD e as regras acima desta seção valem para
+todos os ambientes.
 
 Para ver os authids configurados e o default atual do projeto:
 
@@ -182,5 +213,7 @@ Recomendação deste runbook:
 - Não decide o escopo do deploy (o que/quando) — isso é do `suitescript-dev`.
 - Não edita `MANIFEST.md` nem `TECH-SPEC.md`.
 - Não deploya em produção sem confirmação explícita.
+- Não sobe arquivos para produção em cliente no CI/CD (salvo hotfix emergencial, com backport) — isso é da `deploy-prod`.
+- Não commita o `deploy.xml` temporário usado no deploy manual de objetos.
 - Não reescreve o projeto inteiro quando o pedido é incremental.
 - Não usa `--authid` em `file:upload`, `project:validate` ou `project:deploy`.

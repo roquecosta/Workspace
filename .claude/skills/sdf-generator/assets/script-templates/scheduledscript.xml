@@ -1,0 +1,26 @@
+<scheduledscript scriptid="{{scriptid}}">
+  <description>{{description}}</description>
+  <isinactive>F</isinactive>
+  <name>{{name}}</name>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <scriptfile>{{scriptfile}}</scriptfile>
+  {{scriptcustomfields}}
+  <scriptdeployments>
+    <scriptdeployment scriptid="{{deployid}}">
+      {{deployment_params}}
+      <isdeployed>T</isdeployed>
+      <loglevel>{{loglevel}}</loglevel>
+      <status>{{status}}</status>
+      <title>{{name}}</title>
+      <recurrence>
+        <single>
+          <repeat></repeat>
+          <startdate>{{startdate}}</startdate>
+          <starttime>00:00:00Z</starttime>
+        </single>
+      </recurrence>
+    </scriptdeployment>
+  </scriptdeployments>
+</scheduledscript>

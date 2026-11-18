@@ -66,9 +66,10 @@ Tabela com uma linha por script. Colunas obrigatórias:
 
 **Regras:**
 - **Script ID**: padrão `customscript_<prefixo_projeto>_<nome_descritivo>`. Se o ID real não estiver disponível no spec ou no código, inferir seguindo o padrão `customscript_` + nome do arquivo sem extensão, substituindo hífens por underscores. Marcar com `*` se inferido.
-- **Arquivo**: nome exato do arquivo `.js`
-- **Tipo**: `RESTlet`, `UserEvent`, `MapReduce`, `ClientScript`, `Suitelet`
-- **Record Alvo**: internal ID do record monitorado (apenas para UE e CS); `—` para os demais
+- **Script ID — limite de 40 caracteres**: `customscript_` + nome não pode passar de 40 caracteres. O ID do deployment (`customdeploy_` + o mesmo nome) também tem limite de 40. Mesma regra de abreviação dos campos (ver [Regras gerais](#regras-gerais)).
+- **Arquivo**: nome exato do arquivo `.js`. Se houver mais de um arquivo com o mesmo nome no File Cabinet do projeto, usar o caminho completo (`/SuiteScripts/...`)
+- **Tipo**: `RESTlet`, `UserEvent`, `MapReduce`, `ClientScript`, `Suitelet`, `Scheduled`
+- **Record Alvo**: internal ID do record em que o script é **implantado** (apenas UE e CS): `customrecord_...` para record customizado e o ID nativo (`salesorder`, `vendorbill`, `customer`…) para record padrão. Se houver mais de um, separar por vírgula (um deployment por record). `—` para os demais tipos e para **client scripts carregados via `clientScriptModulePath`** (Suitelet/UE), que não têm objeto de script próprio
 - **Descrição**: uma frase, no infinitivo, descrevendo a responsabilidade principal do script
 
 **Nota sobre IDs inferidos:** Ao final da seção, incluir:
@@ -117,8 +118,13 @@ Usar quando o projeto adiciona campos em records padrão do NetSuite (`invoice`,
 
 Tabela com todos os `custscript_` usados como parâmetros (não IDs de script, mas parâmetros de configuração):
 
-| Internal ID | Usado em | Descrição |
-|-------------|----------|-----------|
+| Internal ID | Tipo | Usado em | Descrição |
+|-------------|------|----------|-----------|
+
+**Regras:**
+- **Tipo**: mesmos tipos aceitos para campos de record (`Text`, `Long Text`, `Integer`, `Decimal`, `Currency`, `Percent`, `Date`, `Datetime`, `Checkbox`, `List/Record`, `Multi-Select`)
+- **Usado em**: Script ID ou nome exato do arquivo `.js` do script (nunca descrição genérica como "MRs especializados"). O **primeiro** item é o **script dono**. O ID de um parâmetro é único na conta, então ele pertence a um único script. Se outro script lê o mesmo valor, listá-lo depois do dono
+- Limite de 40 caracteres no internal ID (`custscript_` incluso), como nos campos customizados
 
 ---
 
@@ -173,7 +179,7 @@ Quando o spec muda de versão:
 - **Não inventar**: se o spec não menciona um campo ou script, não incluir
 - **Não omitir**: se o spec menciona um objeto, ele deve aparecer no manifest
 - **IDs reais têm prioridade**: se o código ou spec fornecer o ID real, usá-lo; nunca sobrescrever um ID real com um inferido
-- **Limite de 40 caracteres em IDs de campos customizados**: o internal ID de qualquer campo customizado — `custrecord_`, `custbody_`, `custcol_`, `custentity_`, `custitem_` — não pode exceder **40 caracteres no total, contando o prefixo**. Validar o comprimento de todo ID (real ou inferido) antes de registrá-lo no manifest:
+- **Limite de 40 caracteres em IDs de campos customizados e de scripts**: o internal ID de qualquer campo customizado — `custrecord_`, `custbody_`, `custcol_`, `custentity_`, `custitem_`, `custscript_` — e os IDs `customscript_`/`customdeploy_` não podem exceder **40 caracteres no total, contando o prefixo**. Validar o comprimento de todo ID (real ou inferido) antes de registrá-lo no manifest:
     - Se um **ID real** fornecido pelo spec/código ultrapassar 40 caracteres, registrá-lo mesmo assim, mas sinalizar com a nota `⚠ excede 40 caracteres — inválido no NetSuite` para revisão.
     - Se um **ID inferido** ultrapassar 40 caracteres, abreviar o nome descritivo de forma consistente e legível (sem cortar o prefixo) até caber no limite, e marcar com `*` para confirmação no ambiente.
     - Nunca **gerar** um ID inferido com mais de 40 caracteres.

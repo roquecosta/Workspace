@@ -1,0 +1,27 @@
+    <scriptcustomfield scriptid="{{paramid}}">
+      <accesslevel>2</accesslevel>
+      <applyformatting>{{applyformatting}}</applyformatting>
+      <checkspelling>F</checkspelling>
+      <defaultchecked>F</defaultchecked>
+      <defaultselection></defaultselection>
+      <defaultvalue></defaultvalue>
+      <description>{{description}}</description>
+      <displayheight></displayheight>
+      <displaytype>NORMAL</displaytype>
+      <displaywidth></displaywidth>
+      <dynamicdefault></dynamicdefault>
+      <fieldtype>{{fieldtype}}</fieldtype>
+      <help></help>
+      <isformula>F</isformula>
+      <ismandatory>F</ismandatory>
+      <label>{{label}}</label>
+      <linktext></linktext>
+      <maxlength></maxlength>
+      <maxvalue></maxvalue>
+      <minvalue></minvalue>
+      <onparentdelete>{{onparentdelete}}</onparentdelete>
+      <searchlevel>2</searchlevel>
+      <selectrecordtype>{{selectrecordtype}}</selectrecordtype>
+      <setting>COMPANY</setting>
+      <storevalue>T</storevalue>
+    </scriptcustomfield>

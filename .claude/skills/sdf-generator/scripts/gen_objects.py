@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
-gen_objects.py — Gera arquivos XML de customrecordtype (SuiteCloud/SDF) a partir
-de um manifest em Markdown.
+gen_objects.py — Gera objetos SDF (customrecordtype e scripts com deployments)
+a partir de um manifest em Markdown.
 
 Project-agnostic: serve qualquer projeto que siga a convenção do manifest
 (seções "### `scriptid` — Nome" seguidas de uma tabela
-| Campo | Internal ID | Tipo | Descrição |).
+| Campo | Internal ID | Tipo | Descrição |). Scripts vêm das seções "## Scripts" e
+"## Parâmetros de Script" — ver script_objects.py e ../assets/script-templates/.
 
 Uso:
     python3 gen_objects.py <manifest.md> [opções]
@@ -17,6 +18,8 @@ Opções:
     --skip IDS         Pula estes scriptids (vírgula-separado)
     --include-existing Inclui registros marcados como "existente" (default: pula)
     --no-description   Não preenche <description> (deixa vazio como export cru)
+    --kind KIND        records | scripts | all (default: all)
+    --overwrite        Sobrescreve XML de script que já existe no projeto (default: pula)
 
 Config JSON (todos os campos são opcionais):
 {
@@ -37,7 +40,20 @@ Config JSON (todos os campos são opcionais):
                                                   // pela validação server-side).
   "parentDeleteAction": "NO_ACTION",             // default NO_ACTION se parentLinkFields não vazio
   "skip": ["customrecord_x"],
-  "only": []
+  "only": [],
+  "scripts": {                           // só para os objetos de script
+    "namePrefix": "PD | XYZ",            // nome = "<namePrefix> | <scriptid humanizado>"
+    "idPrefix": "pd_xyz_",               // removido do scriptid ao humanizar o nome
+    "names": {"customscript_x": "Nome explícito"},
+    "paramLabels": {"custscript_x": "Label explícito"},
+    "paramOwners": {"custscript_x": "customscript_y"},   // força o script dono do parâmetro
+    "fileCabinetRoot": null,             // default: detecta o src/FileCabinet acima do manifest
+    "fileBasePath": null,                // pasta assumida quando o .js ainda não existe
+    "deployStatus": "TESTING",           // UE, CS, RESTlet, Suitelet
+    "scheduledDeployStatus": "NOTSCHEDULED",  // Map/Reduce e Scheduled
+    "logLevel": "DEBUG",
+    "executionContexts": "ACTION|...|WORKFLOW"  // override do conjunto padrão (UE/CS)
+  }
 }
 """
 import argparse
@@ -46,6 +62,9 @@ import os
 import re
 import sys
 from xml.sax.saxutils import escape
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import script_objects  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # DEFAULTS (podem ser sobrescritos pelo --config)
@@ -174,6 +193,10 @@ def parse_manifest(text):
         start = m.end()
         end = matches[i + 1].start() if i + 1 < len(matches) else len(text)
         block = text[start:end]
+        # o bloco termina no próximo "## " (ex.: Parâmetros de Script logo após o último record)
+        sec = re.search(r"^##\s", block, re.MULTILINE)
+        if sec:
+            block = block[:sec.start()]
         records.append({
             "scriptid": scriptid,
             "recordname": recordname,
@@ -277,6 +300,7 @@ def load_config(args):
         "skip": set(), "only": set(),
         "no_description": args.no_description,
         "config_path": None,
+        "scripts": {},
     }
     # --config tem prioridade; senão procura sdf-gen.config.json ao lado do manifest
     config_path = args.config
@@ -297,6 +321,7 @@ def load_config(args):
         cfg["parent_link_fields"] |= set(data.get("parentLinkFields", []))
         if "parentDeleteAction" in data:
             cfg["parent_delete_action"] = data["parentDeleteAction"]
+        cfg["scripts"] = data.get("scripts", {})
     if args.skip:
         cfg["skip"] |= {s.strip() for s in args.skip.split(",")}
     if args.only:
@@ -313,14 +338,19 @@ def main():
     ap.add_argument("--skip")
     ap.add_argument("--include-existing", action="store_true")
     ap.add_argument("--no-description", action="store_true")
+    ap.add_argument("--kind", choices=["records", "scripts", "all"], default="all")
+    ap.add_argument("--overwrite", action="store_true")
     args = ap.parse_args()
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
 
     out_dir = args.out or os.path.join(os.path.dirname(os.path.abspath(args.manifest)), "Objects")
     os.makedirs(out_dir, exist_ok=True)
     cfg = load_config(args)
 
     with open(args.manifest, encoding="utf-8") as f:
-        records = parse_manifest(f.read())
+        text = f.read()
+    records = parse_manifest(text) if args.kind in ("records", "all") else []
 
     warnings, generated, skipped = [], [], []
     for rec in records:
@@ -342,12 +372,21 @@ def main():
             f.write(xml)
         generated.append((sid, len(rec["fields"]), path))
 
+    s_generated = []
+    if args.kind in ("scripts", "all"):
+        s_generated, s_skipped, s_warnings = script_objects.generate_scripts(
+            text, args.manifest, out_dir, cfg, TYPE_MAP, args)
+        skipped += s_skipped
+        warnings += s_warnings
+
     print(f"Saída: {out_dir}")
     if cfg["config_path"]:
         print(f"Config: {cfg['config_path']}")
     print("=== Gerados ===")
     for sid, n, path in generated:
         print(f"  {sid:<44} {n:>2} campos")
+    for sid, kind, nparams, ndeps in s_generated:
+        print(f"  {sid:<44} {kind}, {nparams} parâmetro(s), {ndeps} deployment(s)")
     if skipped:
         print("=== Pulados ===")
         for sid, reason in skipped:

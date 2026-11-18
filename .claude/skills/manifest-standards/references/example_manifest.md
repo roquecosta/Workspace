@@ -171,11 +171,11 @@ ND customizada. Gerada para parcelas REDE após pagamento. Faturada via Vendor B
 
 ## Parâmetros de Script
 
-| Internal ID | Usado em | Descrição |
-|-------------|----------|-----------|
-| `custscript_pd_orch_test_log_id` | `pd-t4l-log-entry.mr.js` | ID de log para modo de teste do Orquestrador (processa apenas 1 registro) |
-| `custscript_pd_t4l_log_entry_batch_id` | MRs especializados | Array JSON de IDs de log enviados em lote pelo Orquestrador |
-| `custscript_pd_t4l_securitization_vendor` | `pd-t4l-vendorbill-handler.us.js`, `pd-t4l-securitization-payment.rl.js` | ID do Vendor configurado como Securitizadora |
+| Internal ID | Tipo | Usado em | Descrição |
+|-------------|------|----------|-----------|
+| `custscript_pd_orch_test_log_id` | Integer | `pd-t4l-log-entry.mr.js` | ID de log para modo de teste do Orquestrador (processa apenas 1 registro) |
+| `custscript_pd_t4l_log_entry_batch_id` | Long Text | `customscript_pd_t4l_log_entry_create_ciot` | Array JSON de IDs de log enviados em lote pelo Orquestrador |
+| `custscript_pd_t4l_securitization_vendor` | List/Record | `pd-t4l-vendorbill-handler.us.js`, `pd-t4l-securitization-payment.rl.js` | ID do Vendor configurado como Securitizadora |
 
 ---
 

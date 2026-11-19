@@ -27,5 +27,9 @@
     "deployStatus": "TESTING",
     "scheduledDeployStatus": "NOTSCHEDULED",
     "logLevel": "DEBUG"
+  },
+
+  "forms": {
+    "groupIdPrefix": ""
   }
 }

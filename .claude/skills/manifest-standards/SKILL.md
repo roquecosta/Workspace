@@ -53,6 +53,7 @@ Todo `MANIFEST.md` deve seguir esta ordem de seções:
 Seções opcionais (incluir apenas se existirem no projeto):
 - `## Campos Customizados em Records Nativos` — para `custbody_`, `custcol_`, `custentity_` em records padrão do NS
 - `## Listas Customizadas` — para `customlist_`
+- `## Formulários` — para formulários de custom record (`custform_`), com o layout dos campos
 - `## Workflows`
 
 ---
@@ -111,6 +112,39 @@ Usar quando o projeto adiciona campos em records padrão do NetSuite (`invoice`,
 | Campo | Internal ID | Tipo | Descrição |
 |-------|-------------|------|-----------|
 ```
+
+---
+
+## Seção: Formulários
+
+Usar quando o projeto tem formulário customizado de **custom record** (`custform_`). Cataloga o
+formulário e o **layout** dos campos: em que grupo cada campo aparece, como é exibido e se vira coluna
+na lista do registro. Uma subseção por formulário:
+
+```markdown
+### `<custform_id>` — <Nome do formulário>
+
+**Record:** `<customrecord_id>` · **Preferido:** Sim
+
+| Grupo | Campo | Internal ID | Exibição | Lista |
+|-------|-------|-------------|----------|-------|
+| Identificação | Código da Proposta | `custrecord_x_numero` | Normal | Sim |
+| Resultado | Preço de Venda Bruto | `custrecord_x_pvb` | Somente leitura | Sim |
+| — | Snapshot técnico | `custrecord_x_json` | Oculto | Não |
+```
+
+**Regras:**
+- **Record**: o custom record do formulário. **Preferido**: `Sim` torna o formulário o padrão do record.
+- **Grupo**: rótulo do grupo de campos (field group) na área principal. Os grupos aparecem na ordem da
+  primeira ocorrência na tabela; os campos, na ordem das linhas. `—` = sem grupo (área padrão do topo).
+- **Campo / Internal ID**: o campo precisa existir na subseção do record em Custom Records. Campos
+  padrão do NetSuite (Nome, Inativo, Proprietário…) não entram na tabela: o gerador preserva a
+  configuração que já existe no formulário.
+- **Exibição**: `Normal`, `Somente leitura` (exibe sem permitir edição), `Desabilitado` ou `Oculto`.
+  Use `Somente leitura` para campo gravado só por script.
+- **Lista**: `Sim` = o campo aparece como coluna na visualização em lista do record (`showinlist` do
+  campo); `Não` = não aparece; vazio = não altera.
+- Layout é catálogo de implantação, não regra de negócio — não precisa de lastro no TECH-SPEC.
 
 ---
 

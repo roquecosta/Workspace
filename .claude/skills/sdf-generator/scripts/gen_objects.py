@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-gen_objects.py — Gera objetos SDF (customrecordtype e scripts com deployments)
-a partir de um manifest em Markdown.
+gen_objects.py — Gera objetos SDF (customrecordtype, scripts com deployments e
+formulários de custom record) a partir de um manifest em Markdown.
 
 Project-agnostic: serve qualquer projeto que siga a convenção do manifest
 (seções "### `scriptid` — Nome" seguidas de uma tabela
 | Campo | Internal ID | Tipo | Descrição |). Scripts vêm das seções "## Scripts" e
 "## Parâmetros de Script" — ver script_objects.py e ../assets/script-templates/.
+Formulários vêm da seção "## Formulários" — ver form_objects.py e ../assets/form-templates/.
 
 Uso:
     python3 gen_objects.py <manifest.md> [opções]
@@ -18,7 +19,7 @@ Opções:
     --skip IDS         Pula estes scriptids (vírgula-separado)
     --include-existing Inclui registros marcados como "existente" (default: pula)
     --no-description   Não preenche <description> (deixa vazio como export cru)
-    --kind KIND        records | scripts | all (default: all)
+    --kind KIND        records | scripts | forms | all (default: all)
     --overwrite        Sobrescreve XML de script que já existe no projeto (default: pula)
 
 Config JSON (todos os campos são opcionais):
@@ -53,6 +54,9 @@ Config JSON (todos os campos são opcionais):
     "scheduledDeployStatus": "NOTSCHEDULED",  // Map/Reduce e Scheduled
     "logLevel": "DEBUG",
     "executionContexts": "ACTION|...|WORKFLOW"  // override do conjunto padrão (UE/CS)
+  },
+  "forms": {                             // só para os formulários
+    "groupIdPrefix": "pd_xyz_"           // scriptid de grupo novo = fieldgroup_<prefixo><rótulo>
   }
 }
 """
@@ -65,6 +69,7 @@ from xml.sax.saxutils import escape
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import script_objects  # noqa: E402
+import form_objects  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # DEFAULTS (podem ser sobrescritos pelo --config)
@@ -172,7 +177,7 @@ FIELD_TEMPLATE = """    <customrecordcustomfield scriptid="{scriptid}">
       <searchdefault></searchdefault>
       <searchlevel>2</searchlevel>
       <selectrecordtype>{selectrecordtype}</selectrecordtype>
-      <showinlist>F</showinlist>
+      <showinlist>{showinlist}</showinlist>
       <sourcefilterby></sourcefilterby>
       <sourcefrom></sourcefrom>
       <sourcelist></sourcelist>
@@ -262,7 +267,9 @@ def build_field_xml(field, cfg, warnings, rec_id):
         applyformatting = "T"
 
     description = "" if cfg["no_description"] else clean_desc(field["desc"])
+    showinlist = "T" if cfg["show_in_list"].get(rec_id, {}).get(field["id"]) else "F"
     return FIELD_TEMPLATE.format(
+        showinlist=showinlist,
         scriptid=field["id"], applyformatting=applyformatting,
         description=escape(description), fieldtype=fieldtype,
         isparent=isparent, ismandatory=ismandatory,
@@ -302,6 +309,8 @@ def load_config(args):
         "no_description": args.no_description,
         "config_path": None,
         "scripts": {},
+        "forms": {},
+        "show_in_list": {},
     }
     # --config tem prioridade; senão procura sdf-gen.config.json ao lado do manifest
     config_path = args.config
@@ -323,6 +332,7 @@ def load_config(args):
         if "parentDeleteAction" in data:
             cfg["parent_delete_action"] = data["parentDeleteAction"]
         cfg["scripts"] = data.get("scripts", {})
+        cfg["forms"] = data.get("forms", {})
     if args.skip:
         cfg["skip"] |= {s.strip() for s in args.skip.split(",")}
     if args.only:
@@ -339,7 +349,7 @@ def main():
     ap.add_argument("--skip")
     ap.add_argument("--include-existing", action="store_true")
     ap.add_argument("--no-description", action="store_true")
-    ap.add_argument("--kind", choices=["records", "scripts", "all"], default="all")
+    ap.add_argument("--kind", choices=["records", "scripts", "forms", "all"], default="all")
     ap.add_argument("--overwrite", action="store_true")
     args = ap.parse_args()
     if hasattr(sys.stdout, "reconfigure"):
@@ -351,7 +361,9 @@ def main():
 
     with open(args.manifest, encoding="utf-8") as f:
         text = f.read()
-    records = parse_manifest(text) if args.kind in ("records", "all") else []
+    all_records = parse_manifest(text)
+    records = all_records if args.kind in ("records", "all") else []
+    cfg["show_in_list"] = form_objects.show_in_list_map(text)
 
     warnings, generated, skipped = [], [], []
     for rec in records:
@@ -380,6 +392,13 @@ def main():
         skipped += s_skipped
         warnings += s_warnings
 
+    f_generated = []
+    if args.kind in ("forms", "all"):
+        f_generated, f_skipped, f_warnings = form_objects.generate_forms(
+            text, args.manifest, out_dir, cfg, all_records)
+        skipped += f_skipped
+        warnings += f_warnings
+
     print(f"Saída: {out_dir}")
     if cfg["config_path"]:
         print(f"Config: {cfg['config_path']}")
@@ -388,6 +407,11 @@ def main():
         print(f"  {sid:<44} {n:>2} campos")
     for sid, kind, nparams, ndeps in s_generated:
         print(f"  {sid:<44} {kind}, {nparams} parâmetro(s), {ndeps} deployment(s)")
+    for sid, mode, a, b, path in f_generated:
+        if mode == "lista":
+            print(f"  {sid:<44} coluna Lista: {a} campo(s) alterado(s) de {b} — {path}")
+        else:
+            print(f"  {sid:<44} formulário {mode}: {a} grupo(s), {b} campo(s) — {path}")
     if skipped:
         print("=== Pulados ===")
         for sid, reason in skipped:

@@ -1,6 +1,6 @@
 ---
 name: sdf-generator
-description: Gera objetos XML do SuiteCloud/SDF a partir do MANIFEST em Markdown — custom records (customrecordtype) e scripts com seus deployments e parâmetros (usereventscript, mapreducescript, clientscript, scheduledscript, restlet, suitelet) — prontos para a primeira subida ao NetSuite via SuiteCloud CLI. Use quando o usuário pedir para gerar os objetos SDF / o XML de um registro ou de um script a partir do manifest, mencionar "gerar objetos", "materializar os objetos", "subir registro/script para o NetSuite", "customrecordtype", "script deployment", ".xml para o SDF", ou apontar para um manifest de um projeto NetSuite e pedir os XMLs correspondentes.
+description: Gera objetos XML do SuiteCloud/SDF a partir do MANIFEST em Markdown — custom records (customrecordtype), scripts com seus deployments e parâmetros (usereventscript, mapreducescript, clientscript, scheduledscript, restlet, suitelet) e formulários de custom record (entryForm/custform_, criação ou atualização com grupos de campos, formulário preferido e colunas da lista) — prontos para subir ao NetSuite via SuiteCloud CLI. Use quando o usuário pedir para gerar os objetos SDF / o XML de um registro ou de um script a partir do manifest, mencionar "gerar objetos", "materializar os objetos", "subir registro/script para o NetSuite", "customrecordtype", "script deployment", "formulário", "custform", "agrupar campos do formulário", "campos na lista do registro", ".xml para o SDF", ou apontar para um manifest de um projeto NetSuite e pedir os XMLs correspondentes.
 ---
 
 # SDF Generator
@@ -10,6 +10,8 @@ prontos para `suitecloud project:deploy`:
 
 - **Custom records** (`customrecordtype`), a partir das subseções `### \`customrecord_...\``.
 - **Scripts** com deployments e parâmetros, a partir das seções `## Scripts` e `## Parâmetros de Script`.
+- **Formulários de custom record** (`entryForm`, `custform_`), a partir da seção `## Formulários`:
+  grupos de campos, exibição, formulário preferido e colunas da lista do record (`showinlist`).
 
 Serve para a **primeira subida**. Ajustes finos (status `RELEASED`, agendamento, audiência, log level)
 são feitos depois no próprio NetSuite ou no XML.
@@ -36,12 +38,12 @@ tudo ou só um tipo/objeto (`--kind`, `--only`). O resto é automático.
 2. Rode o gerador:
 
    ```bash
-   python3 scripts/gen_objects.py <caminho/do/MANIFEST.md> [--kind records|scripts|all] [--only ids] [--out dir]
+   python3 scripts/gen_objects.py <caminho/do/MANIFEST.md> [--kind records|scripts|forms|all] [--only ids] [--out dir]
    ```
 
    - Saída padrão: pasta `Objects/` ao lado do manifest. Use `--out` para apontar para a pasta
      `src/Objects/...` do projeto SuiteCloud.
-   - `--kind` padrão `all` (records + scripts).
+   - `--kind` padrão `all` (records + scripts + formulários).
    - `--overwrite` só se o usuário pedir explicitamente (ver "Scripts já existentes").
 
 3. Se existir um `sdf-gen.config.json` na mesma pasta do manifest, ele é carregado
@@ -88,6 +90,29 @@ Tabela `| Internal ID | Tipo | Usado em | Descrição |`.
   com aviso.
 - Cada deployment do script dono recebe a tag `<custscript_x></custscript_x>` (valor vazio, igual ao export).
 
+### Formulários (`## Formulários`)
+Uma subseção `### \`custform_x\` — Nome` com a linha `**Record:** \`customrecord_x\` · **Preferido:** Sim`
+e a tabela `| Grupo | Campo | Internal ID | Exibição | Lista |` (formato completo na skill
+`manifest-standards`, "Seção: Formulários").
+
+| Coluna | Uso no XML |
+|---|---|
+| Grupo | `<fieldGroup>` na área principal, na ordem da primeira ocorrência. `—` = grupo padrão sem título. Grupo novo recebe o scriptid `fieldgroup_<groupIdPrefix><rótulo>` (máx. 40); grupo existente com o mesmo rótulo mantém o scriptid |
+| Campo | `<label>` do campo no formulário |
+| Exibição | `Normal` → `NORMAL`; `Somente leitura` → `INLINETEXT`; `Desabilitado` → `DISABLED`; `Oculto` → `<visible>F</visible>` |
+| Lista | `Sim`/`Não` → `<showinlist>` do campo no XML do **record** (vazio = não altera) |
+| Preferido | `<preferred>`: `Sim` torna o formulário o padrão do record |
+
+**Dois modos, decididos pela existência do XML** (em `--out` ou no `src/Objects` do projeto):
+- **Atualização** (XML existente, normalmente vindo de `object:import`): reescreve só `<mainFields>`,
+  `<preferred>` e `<name>`, preservando abas, sublistas, action bar e os campos padrão do NetSuite
+  (Nome, Inativo…). Campo custom que está no formulário mas não no manifest fica sem grupo, com aviso.
+  Rodar de novo não muda nada. **Faça `object:import` antes** para não perder configuração da conta.
+- **Criação** (XML não existe): preenche `assets/form-templates/entryform_customrecord.xml`.
+
+A coluna Lista é aplicada no XML do record se ele existir (atualização pontual de `<showinlist>`); o
+gerador de records (`--kind records`) também a respeita ao gerar o record do zero.
+
 ## Padrões de deployment (primeira subida)
 
 | Tipo | Status padrão | Observação |
@@ -106,6 +131,14 @@ valor padrão diferente), **edite o template**, não o código. Placeholders e r
 `assets/script-templates/README.md`.
 
 ## Pontos de atenção (sempre comunicar ao usuário)
+
+- **Formulário referencia sublistas de registros filhos** (`[scriptid=customrecord_filho.campo_pai]`
+  na aba Personalizado): num deploy parcial, declare esses campos em `<dependencies><objects>` do
+  `manifest.xml` temporariamente, senão a validação acusa "referência de objeto ausente".
+- **Record com campo de lista que aponta para `customlist_x.val_N`** (seleção padrão): inclua a própria
+  custom list no `deploy.xml`; só declarar a lista como dependência não resolve o valor.
+- **Template de formulário** foi derivado de um export real de custom record (Drivetech). A criação
+  do zero ainda não passou por `project:validate`; valide no primeiro uso.
 
 - **Scripts já existentes:** se já existe `<scriptid>.xml` em `--out` ou no `src/Objects` do projeto,
   o script é **pulado**. O XML real tem a configuração de produção (status, agendamento, valores de
@@ -127,7 +160,7 @@ valor padrão diferente), **edite o template**, não o código. Placeholders e r
 
 ## O que esta skill NÃO gera
 
-`customlist`, campos em records nativos (`custbody_`, `custcol_`, `custentity_`…), workflows, e tipos
+`customlist`, formulários de record nativo ou de transação, campos em records nativos (`custbody_`, `custcol_`, `custentity_`…), workflows, e tipos
 de script sem template (Portlet, Mass Update, Workflow Action, Bundle Installation). Esses aparecem
 como pulados. Avise o usuário se o manifest contiver esses itens.
 
@@ -135,5 +168,7 @@ como pulados. Avise o usuário se o manifest contiver esses itens.
 
 - `scripts/gen_objects.py` — entrypoint e gerador de custom records.
 - `scripts/script_objects.py` — gerador de scripts (preenche os templates).
+- `scripts/form_objects.py` — gerador de formulários de custom record (criação e atualização).
+- `assets/form-templates/entryform_customrecord.xml` — template whitelabel de formulário de custom record.
 - `assets/script-templates/` — templates whitelabel por tipo de script + `README.md`.
 - `examples/sdf-gen.config.json` — exemplo de config por projeto (copiar para a pasta do manifest e ajustar).

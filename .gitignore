@@ -6,3 +6,6 @@
 
 # 3. Allow the specific folder you want to keep
 !.claude
+# 4. Cache do Python (scripts das skills)
+__pycache__/
+*.pyc

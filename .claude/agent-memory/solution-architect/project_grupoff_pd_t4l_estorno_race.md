@@ -34,6 +34,11 @@ também precisa ser adicionado.
 espelhando o padrão de `payCiot`), incluir também o reset de status como parte
 explícita da regra de negócio no TECH-SPEC — não assumir que já existe. Ver também
 [[feedback-legacy-module-minimal-tech-spec]] — este projeto tem um `SPEC.md` robusto
-(não `TECH-SPEC.md`); ainda em aberto com o usuário se ele deve ser tratado como o
-TECH-SPEC canônico do projeto ou se um `TECH-SPEC.md` novo e enxuto deve ser criado só
-para este fluxo.
+(não `TECH-SPEC.md`); **resolvido em 2026-11-12 (EC-601, v3.8): o arquivo foi renomeado para
+`Docs/TECH-SPEC.md` (pedido do usuário, padrão Dome) e é o TECH-SPEC canônico do pd_t4l** —
+novas mudanças entram como nova versão no changelog dele. MANIFEST alinhado com GrupoFF_Prod
+(prod = referência final de IDs, por decisão do usuário).
+(DEV-858 = só a soma em centavos do payload pd_inp, já em prod/PR #5.) EC-601 consolida
+(design; código ainda não implementado em 2026-11-12, card aguardando aprovação do cliente) a NFS-e em 1 linha (só a NFS-e — o que vai para a TS/PlugNotas) e
+corrigiu o estorno para não sinalizar cancelamento de NFS-e quando a VendorBill bloqueia.
+Pendência separada conhecida: IDs de campos NC/ND no MANIFEST divergem do XML real.

@@ -83,6 +83,7 @@ TYPE_MAP = {
     "Long Text": "CLOBTEXT", "Free-Form Text": "TEXT", "Text": "TEXT",
     "Text Area": "TEXTAREA", "Checkbox": "CHECKBOX",
     "Date": "DATE", "Datetime": "DATETIMETZ", "Integer": "INTEGER",
+    "Decimal Number": "FLOAT", "Date/Time": "DATETIMETZ",
 }
 
 # marcadores que indicam "registro já existe no NetSuite, não gerar"
